@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 #include "nlohmann/json.hpp"
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
@@ -13,6 +14,14 @@ using json = nlohmann::json;
 enum class SceneType {
     STATIC,
     VIDEO
+};
+
+struct Layer {
+    SDL_Texture* texture;
+    int zIndex;
+    Uint8 opacity;
+    
+    Layer() : texture(nullptr), zIndex(0), opacity(255) {}
 };
 
 class SceneManager {
@@ -38,12 +47,16 @@ private:
     
     VideoPlayer* videoPlayer;
     SDL_Texture* backgroundTexture;
+    std::vector<Layer> layers;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
     void drawGrid();
     void loadBackgroundImage(const std::string& imagePath);
     void cleanupBackground();
+    void loadLayers(const json& sceneData);
+    void cleanupLayers();
+    bool loadLayerImage(Layer& layer, const std::string& imagePath);
 };
 
 #endif

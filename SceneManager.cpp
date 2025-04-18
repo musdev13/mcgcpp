@@ -11,6 +11,7 @@ SceneManager::SceneManager(SDL_Renderer* renderer) : renderer(renderer) {
 SceneManager::~SceneManager() {
     delete videoPlayer;
     cleanupBackground();
+    cleanupLayers();
 }
 
 bool SceneManager::loadScene(const std::string& sceneName) {
@@ -60,15 +61,7 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     backgroundColor.a = bgColor["a"];
     
     showGrid = sceneData.value("showGrid", false);
-    
-    // Cleanup previous background if exists
-    cleanupBackground();
-    
-    // Load background image if specified
-    if (sceneData.contains("backgroundImage")) {
-        std::string imagePath = gamePath + "/image/" + sceneData["backgroundImage"].get<std::string>();
-        loadBackgroundImage(imagePath);
-    }
+    loadLayers(sceneData);
 }
 
 void SceneManager::loadBackgroundImage(const std::string& imagePath) {
@@ -89,6 +82,51 @@ void SceneManager::cleanupBackground() {
         SDL_DestroyTexture(backgroundTexture);
         backgroundTexture = nullptr;
     }
+}
+
+void SceneManager::cleanupLayers() {
+    for(auto& layer : layers) {
+        if(layer.texture) {
+            SDL_DestroyTexture(layer.texture);
+        }
+    }
+    layers.clear();
+}
+
+void SceneManager::loadLayers(const json& sceneData) {
+    cleanupLayers();
+    
+    if (!sceneData.contains("layers")) return;
+    
+    for (const auto& layerData : sceneData["layers"]) {
+        Layer layer;
+        layer.zIndex = layerData.value("z", 0);
+        layer.opacity = layerData.value("opacity", 255);
+        
+        std::string imagePath = gamePath + "/image/" + layerData["image"].get<std::string>();
+        if (loadLayerImage(layer, imagePath)) {
+            layers.push_back(layer);
+        }
+    }
+    
+    // Sort layers by z-index
+    std::sort(layers.begin(), layers.end(), 
+        [](const Layer& a, const Layer& b) { return a.zIndex < b.zIndex; });
+}
+
+bool SceneManager::loadLayerImage(Layer& layer, const std::string& imagePath) {
+    SDL_Surface* surface = IMG_Load(imagePath.c_str());
+    if (surface) {
+        layer.texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+        if (!layer.texture) {
+            std::cout << "Failed to create texture from image: " << SDL_GetError() << std::endl;
+            return false;
+        }
+        return true;
+    }
+    std::cout << "Failed to load image: " << IMG_GetError() << std::endl;
+    return false;
 }
 
 void SceneManager::drawGrid() {
@@ -136,9 +174,10 @@ void SceneManager::render() {
             backgroundColor.a);
         SDL_RenderClear(renderer);
         
-        // Render background image if exists
-        if (backgroundTexture) {
-            SDL_RenderCopy(renderer, backgroundTexture, nullptr, nullptr);
+        // Render all layers in order
+        for(const auto& layer : layers) {
+            SDL_SetTextureAlphaMod(layer.texture, layer.opacity);
+            SDL_RenderCopy(renderer, layer.texture, nullptr, nullptr);
         }
         
         if(showGrid && currentSceneType == SceneType::STATIC) {

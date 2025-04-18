@@ -6,6 +6,12 @@
         "b": 237,
         "a": 255
     },
-    "backgroundImage": "bg.png",
+    "layers": [
+        {
+            "image": "bg.png",
+            "z": 0,
+            "opacity": 255
+        }
+    ],
     "showGrid": true
 }
