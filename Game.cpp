@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include <fstream>
 
 Game::Game(){
     sceneManager = nullptr;
@@ -29,7 +30,17 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
             
             sceneManager = new SceneManager(renderer);
             sceneManager->setGamePath(gamePath);
-            sceneManager->loadScene("intro"); // Загружаем начальную сцену
+
+            // Читаем начальную сцену из settings.json
+            std::string settingsPath = gamePath + "/settings.json";
+            std::ifstream settingsFile(settingsPath);
+            if (settingsFile.is_open()) {
+                json settings;
+                settingsFile >> settings;
+                sceneManager->loadScene(settings["initialScene"]);
+            } else {
+                sceneManager->loadScene("menu"); // Fallback если файл не найден
+            }
         }
 
         isRunning = true;

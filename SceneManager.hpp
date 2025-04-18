@@ -32,11 +32,14 @@ private:
     SceneType currentSceneType;
     std::string nextSceneName;
     Uint32 nextFrameTime;
+    bool showGrid;
+    static const int GRID_SIZE = 48;
     
     VideoPlayer* videoPlayer;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
+    void drawGrid();
 };
 
 #endif

@@ -56,6 +56,25 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     backgroundColor.g = bgColor["g"];
     backgroundColor.b = bgColor["b"];
     backgroundColor.a = bgColor["a"];
+    
+    showGrid = sceneData.value("showGrid", false);
+}
+
+void SceneManager::drawGrid() {
+    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+    
+    int w, h;
+    SDL_GetRendererOutputSize(renderer, &w, &h);
+    
+    // Вертикальные линии
+    for(int x = 0; x <= w; x += GRID_SIZE) {
+        SDL_RenderDrawLine(renderer, x, 0, x, h);
+    }
+    
+    // Горизонтальные линии
+    for(int y = 0; y <= h; y += GRID_SIZE) {
+        SDL_RenderDrawLine(renderer, 0, y, w, y);
+    }
 }
 
 void SceneManager::update() {
@@ -85,5 +104,9 @@ void SceneManager::render() {
             backgroundColor.b, 
             backgroundColor.a);
         SDL_RenderClear(renderer);
+        
+        if(showGrid && currentSceneType == SceneType::STATIC) {
+            drawGrid();
+        }
     }
 }
