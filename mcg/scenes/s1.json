@@ -13,5 +13,9 @@
             "opacity": 255
         }
     ],
+    "player": {
+        "row": 6,
+        "col": 7
+    },
     "showGrid": true
 }

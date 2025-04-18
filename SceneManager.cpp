@@ -68,6 +68,7 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     
     // Инициализируем сетку только для статических сцен
     calculateGrid();
+    initializePlayer(sceneData);
 }
 
 void SceneManager::loadBackgroundImage(const std::string& imagePath) {
@@ -219,6 +220,8 @@ void SceneManager::update() {
                 nextFrameTime = currentTime;
             }
         }
+    } else if(currentSceneType == SceneType::STATIC) {
+        updatePlayerPosition();
     }
 }
 
@@ -242,5 +245,40 @@ void SceneManager::render() {
         if(showGrid && currentSceneType == SceneType::STATIC) {
             drawGrid();
         }
+        
+        if(currentSceneType == SceneType::STATIC) {
+            player.render(renderer);
+        }
     }
+}
+
+void SceneManager::initializePlayer(const json& sceneData) {
+    if (!sceneData.contains("player")) return;
+    
+    auto playerData = sceneData["player"];
+    int row = playerData.value("row", 0);
+    int col = playerData.value("col", 0);
+    player.setPosition(row, col, GRID_SIZE);
+}
+
+void SceneManager::handlePlayerMovement(SDL_Keycode key) {
+    if (currentSceneType != SceneType::STATIC || player.isMoving()) return;
+    
+    int newRow = player.getTargetRow();
+    int newCol = player.getTargetCol();
+    
+    switch(key) {
+        case SDLK_UP:    newRow--; break;
+        case SDLK_DOWN:  newRow++; break;
+        case SDLK_LEFT:  newCol--; break;
+        case SDLK_RIGHT: newCol++; break;
+    }
+    
+    if (getCellAt(newRow, newCol)) {
+        player.move(newRow, newCol);
+    }
+}
+
+void SceneManager::updatePlayerPosition() {
+    player.update();
 }

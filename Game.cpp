@@ -74,6 +74,8 @@ void Game::handleEvents() {
                             std::cout << "Cell ID: row=" << cell->row << ", col=" << cell->col << std::endl;
                         }
                     }
+                } else if(sceneManager) {
+                    sceneManager->handlePlayerMovement(event.key.keysym.sym);
                 }
                 break;
         }
@@ -82,9 +84,30 @@ void Game::handleEvents() {
 
 void Game::update(){
     if(sceneManager) {
+        handleMovementKeys();
         sceneManager->update();
     }
 }
+
+void Game::handleMovementKeys() {
+    const Uint8* keyState = SDL_GetKeyboardState(NULL);
+    
+    if(!sceneManager) return;
+    
+    if(keyState[SDL_SCANCODE_UP]) {
+        sceneManager->handlePlayerMovement(SDLK_UP);
+    }
+    else if(keyState[SDL_SCANCODE_DOWN]) {
+        sceneManager->handlePlayerMovement(SDLK_DOWN);
+    }
+    else if(keyState[SDL_SCANCODE_LEFT]) {
+        sceneManager->handlePlayerMovement(SDLK_LEFT);
+    }
+    else if(keyState[SDL_SCANCODE_RIGHT]) {
+        sceneManager->handlePlayerMovement(SDLK_RIGHT);
+    }
+}
+
 void Game::render(){
     SDL_RenderClear(renderer);
     

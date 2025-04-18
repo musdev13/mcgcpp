@@ -8,6 +8,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "VideoPlayer.hpp"
+#include "Player.hpp"
 
 using json = nlohmann::json;
 
@@ -46,6 +47,7 @@ public:
     const GridCell* getCellAt(int row, int col) const;
     const GridCell* getCellAtPosition(int x, int y) const;
     void calculateGrid();
+    void handlePlayerMovement(SDL_Keycode key);
 
 private:
     SDL_Renderer* renderer;
@@ -64,6 +66,7 @@ private:
     std::vector<std::vector<GridCell>> grid;
     int gridRows;
     int gridCols;
+    Player player;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -74,6 +77,9 @@ private:
     void cleanupLayers();
     bool loadLayerImage(Layer& layer, const std::string& imagePath);
     void initializeGrid();
+    void initializePlayer(const json& sceneData);
+    void updatePlayerPosition();
+    void renderPlayer();
 };
 
 #endif

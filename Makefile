@@ -5,7 +5,7 @@ LIBS = $(shell sdl2-config --cflags --libs) \
        $(shell pkg-config --cflags --libs libavcodec libavformat libswscale libavutil) \
        -lSDL2_image
 
-SRCS = main.cpp Game.cpp SceneManager.cpp VideoPlayer.cpp
+SRCS = main.cpp Game.cpp SceneManager.cpp VideoPlayer.cpp Player.cpp
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)
 TARGET = main

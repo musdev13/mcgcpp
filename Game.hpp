@@ -23,6 +23,8 @@ private:
     SDL_Window *window;
     SDL_Renderer *renderer;
     SceneManager* sceneManager;
+
+    void handleMovementKeys(); // Новый метод для обработки клавиш движения
 };
 
 #endif
