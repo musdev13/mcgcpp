@@ -29,7 +29,7 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
             
             sceneManager = new SceneManager(renderer);
             sceneManager->setGamePath(gamePath);
-            sceneManager->loadScene("default"); // Загружаем начальную сцену
+            sceneManager->loadScene("intro"); // Загружаем начальную сцену
         }
 
         isRunning = true;
@@ -51,7 +51,11 @@ void Game::handleEvents(){
         break;
     }
 }
-void Game::update(){}
+void Game::update(){
+    if(sceneManager) {
+        sceneManager->update();
+    }
+}
 void Game::render(){
     SDL_RenderClear(renderer);
     

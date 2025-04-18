@@ -1,0 +1,6 @@
+{
+    "type": "video",
+    "videoFile": "intro.mp4",
+    "duration": 5000,
+    "nextScene": "menu"
+}

@@ -1,0 +1,9 @@
+{
+    "type": "static",
+    "backgroundColor": {
+        "r": 100,
+        "g": 149,
+        "b": 237,
+        "a": 255
+    }
+}
