@@ -56,19 +56,30 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
     }
 }
 
-void Game::handleEvents(){
+void Game::handleEvents() {
     SDL_Event event;
-    SDL_PollEvent(&event);
-    switch (event.type)
-    {
-    case SDL_QUIT:
-        isRunning=false;
-        break;
-    
-    default:
-        break;
+    while(SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_QUIT:
+                isRunning = false;
+                break;
+            
+            case SDL_KEYDOWN:
+                if(event.key.keysym.sym == SDLK_p) {
+                    int mouseX, mouseY;
+                    SDL_GetMouseState(&mouseX, &mouseY);
+                    if(sceneManager) {
+                        const GridCell* cell = sceneManager->getCellAtPosition(mouseX, mouseY);
+                        if(cell) {
+                            std::cout << "Cell ID: row=" << cell->row << ", col=" << cell->col << std::endl;
+                        }
+                    }
+                }
+                break;
+        }
     }
 }
+
 void Game::update(){
     if(sceneManager) {
         sceneManager->update();

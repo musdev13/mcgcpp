@@ -6,6 +6,9 @@ SceneManager::SceneManager(SDL_Renderer* renderer) : renderer(renderer) {
     videoPlayer = new VideoPlayer(renderer);
     currentSceneType = SceneType::STATIC;
     backgroundTexture = nullptr;
+    gridRows = 0;
+    gridCols = 0;
+    calculateGrid();
 }
 
 SceneManager::~SceneManager() {
@@ -62,6 +65,9 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     
     showGrid = sceneData.value("showGrid", false);
     loadLayers(sceneData);
+    
+    // Инициализируем сетку только для статических сцен
+    calculateGrid();
 }
 
 void SceneManager::loadBackgroundImage(const std::string& imagePath) {
@@ -129,20 +135,73 @@ bool SceneManager::loadLayerImage(Layer& layer, const std::string& imagePath) {
     return false;
 }
 
-void SceneManager::drawGrid() {
-    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+void SceneManager::calculateGrid() {
+    // Вычисляем сетку только если текущая сцена статическая
+    if(currentSceneType != SceneType::STATIC) {
+        return;
+    }
     
     int w, h;
     SDL_GetRendererOutputSize(renderer, &w, &h);
     
-    // Вертикальные линии
-    for(int x = 0; x <= w; x += GRID_SIZE) {
-        SDL_RenderDrawLine(renderer, x, 0, x, h);
+    gridCols = w / GRID_SIZE;
+    gridRows = h / GRID_SIZE;
+    
+    initializeGrid();
+}
+
+void SceneManager::initializeGrid() {
+    grid.resize(gridRows);
+    for(int row = 0; row < gridRows; row++) {
+        grid[row].resize(gridCols);
+        for(int col = 0; col < gridCols; col++) {
+            GridCell& cell = grid[row][col];
+            cell.row = row;
+            cell.col = col;
+            cell.rect.x = col * GRID_SIZE;
+            cell.rect.y = row * GRID_SIZE;
+            cell.rect.w = GRID_SIZE;
+            cell.rect.h = GRID_SIZE;
+        }
+    }
+}
+
+const GridCell* SceneManager::getCellAt(int row, int col) const {
+    // Возвращаем nullptr если сцена не статическая
+    if(currentSceneType != SceneType::STATIC) {
+        return nullptr;
     }
     
-    // Горизонтальные линии
-    for(int y = 0; y <= h; y += GRID_SIZE) {
-        SDL_RenderDrawLine(renderer, 0, y, w, y);
+    if(row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+        return &grid[row][col];
+    }
+    return nullptr;
+}
+
+const GridCell* SceneManager::getCellAtPosition(int x, int y) const {
+    // Возвращаем nullptr если сцена не статическая
+    if(currentSceneType != SceneType::STATIC) {
+        return nullptr;
+    }
+    
+    int row = y / GRID_SIZE;
+    int col = x / GRID_SIZE;
+    return getCellAt(row, col);
+}
+
+void SceneManager::drawGrid() {
+    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+    
+    // Draw vertical lines
+    for(int col = 0; col <= gridCols; col++) {
+        int x = col * GRID_SIZE;
+        SDL_RenderDrawLine(renderer, x, 0, x, gridRows * GRID_SIZE);
+    }
+    
+    // Draw horizontal lines
+    for(int row = 0; row <= gridRows; row++) {
+        int y = row * GRID_SIZE;
+        SDL_RenderDrawLine(renderer, 0, y, gridCols * GRID_SIZE, y);
     }
 }
 
