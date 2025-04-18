@@ -5,10 +5,12 @@ SceneManager::SceneManager(SDL_Renderer* renderer) : renderer(renderer) {
     backgroundColor = {255, 255, 255, 255};
     videoPlayer = new VideoPlayer(renderer);
     currentSceneType = SceneType::STATIC;
+    backgroundTexture = nullptr;
 }
 
 SceneManager::~SceneManager() {
     delete videoPlayer;
+    cleanupBackground();
 }
 
 bool SceneManager::loadScene(const std::string& sceneName) {
@@ -58,6 +60,35 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     backgroundColor.a = bgColor["a"];
     
     showGrid = sceneData.value("showGrid", false);
+    
+    // Cleanup previous background if exists
+    cleanupBackground();
+    
+    // Load background image if specified
+    if (sceneData.contains("backgroundImage")) {
+        std::string imagePath = gamePath + "/image/" + sceneData["backgroundImage"].get<std::string>();
+        loadBackgroundImage(imagePath);
+    }
+}
+
+void SceneManager::loadBackgroundImage(const std::string& imagePath) {
+    SDL_Surface* surface = IMG_Load(imagePath.c_str());
+    if (surface) {
+        backgroundTexture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+        if (!backgroundTexture) {
+            std::cout << "Failed to create texture from image: " << SDL_GetError() << std::endl;
+        }
+    } else {
+        std::cout << "Failed to load image: " << IMG_GetError() << std::endl;
+    }
+}
+
+void SceneManager::cleanupBackground() {
+    if (backgroundTexture) {
+        SDL_DestroyTexture(backgroundTexture);
+        backgroundTexture = nullptr;
+    }
 }
 
 void SceneManager::drawGrid() {
@@ -104,6 +135,11 @@ void SceneManager::render() {
             backgroundColor.b, 
             backgroundColor.a);
         SDL_RenderClear(renderer);
+        
+        // Render background image if exists
+        if (backgroundTexture) {
+            SDL_RenderCopy(renderer, backgroundTexture, nullptr, nullptr);
+        }
         
         if(showGrid && currentSceneType == SceneType::STATIC) {
             drawGrid();

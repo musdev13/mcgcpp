@@ -18,6 +18,13 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
     if(SDL_Init(SDL_INIT_EVERYTHING) == 0){
         std::cout << "Subsystems Initialized!..." << std::endl;
         
+        // Initialize SDL_Image for PNG support
+        if(!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+            std::cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+            isRunning = false;
+            return;
+        }
+
         window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
         if(window){
             std::cout << "Window created!" << std::endl;
@@ -81,6 +88,7 @@ void Game::render(){
 void Game::clean(){
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
+    IMG_Quit();
     SDL_Quit();
     std::cout << "Game Cleaned!" << std::endl;
 }

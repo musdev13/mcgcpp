@@ -5,6 +5,7 @@
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
 #include "VideoPlayer.hpp"
 
 using json = nlohmann::json;
@@ -36,10 +37,13 @@ private:
     static const int GRID_SIZE = 48;
     
     VideoPlayer* videoPlayer;
+    SDL_Texture* backgroundTexture;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
     void drawGrid();
+    void loadBackgroundImage(const std::string& imagePath);
+    void cleanupBackground();
 };
 
 #endif

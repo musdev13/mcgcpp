@@ -6,5 +6,6 @@
         "b": 237,
         "a": 255
     },
+    "backgroundImage": "bg.png",
     "showGrid": true
 }
