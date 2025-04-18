@@ -39,7 +39,7 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
                 settingsFile >> settings;
                 sceneManager->loadScene(settings["initialScene"]);
             } else {
-                sceneManager->loadScene("menu"); // Fallback если файл не найден
+                sceneManager->loadScene("error"); // Fallback если файл не найден
             }
         }
 
