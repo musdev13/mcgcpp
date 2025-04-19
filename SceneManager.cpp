@@ -259,6 +259,13 @@ void SceneManager::initializePlayer(const json& sceneData) {
     float x = playerData.value("col", 0) * GRID_SIZE; // Convert grid position to pixels
     float y = playerData.value("row", 0) * GRID_SIZE;
     player.setPosition(x, y, GRID_SIZE);
+    
+    // Load player sprite using skin from JSON
+    std::string playerSkin = playerData.value("skin", "marko"); // Default to "marko" if not specified
+    std::string spritePath = gamePath + "/skin/" + playerSkin + "/spritesheet.png";
+    if (!player.loadSprite(renderer, spritePath)) {
+        std::cout << "Failed to load player skin: " << playerSkin << std::endl;
+    }
 }
 
 void SceneManager::updatePlayerVelocity(float dx, float dy) {

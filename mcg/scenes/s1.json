@@ -15,7 +15,9 @@
     ],
     "player": {
         "row": 6,
-        "col": 7
+        "col": 7,
+        "skin": "marko",
+        "direction": "down"
     },
     "showGrid": true
 }
