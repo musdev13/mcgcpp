@@ -74,13 +74,14 @@ void Game::handleEvents() {
             
             case SDL_KEYDOWN:
                 if(event.key.keysym.sym == SDLK_p) {
-                    int mouseX, mouseY;
-                    SDL_GetMouseState(&mouseX, &mouseY);
                     if(sceneManager) {
-                        const GridCell* cell = sceneManager->getCellAtPosition(mouseX, mouseY);
-                        if(cell) {
-                            std::cout << "Cell ID: row=" << cell->row << ", col=" << cell->col << std::endl;
-                        }
+                        auto [row, col] = sceneManager->getCurrentPlayerCell();
+                        std::cout << "Player is at: row=" << row << ", col=" << col << std::endl;
+                    }
+                }
+                else if(event.key.keysym.sym == SDLK_z) {
+                    if(sceneManager) {
+                        sceneManager->useCurrentCell();
                     }
                 }
                 break;

@@ -33,5 +33,13 @@
         {"row": 6, "col": 5},
         {"row": 7, "col": 5},
         {"row": 8, "col": 14}
+    ],
+    "ScriptCells": [
+        {
+            "cells": [
+                {"row":6, "col":7}
+            ],
+            "needUseKey": true
+        }
     ]
 }

@@ -65,7 +65,8 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     
     showGrid = sceneData.value("showGrid", false);
     loadLayers(sceneData);
-    loadCollisions(sceneData);  // Добавляем загрузку коллизий
+    loadCollisions(sceneData);
+    loadScriptCells(sceneData); // Добавили загрузку скрипт-клеток
     calculateGrid();
     initializePlayer(sceneData);
 }
@@ -267,6 +268,19 @@ void SceneManager::render() {
             };
             SDL_RenderFillRect(renderer, &playerPoint);
         }
+        // Рендерим скрипт-клетки
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128); // Полупрозрачный синий
+        for(const auto& group : scriptCells) {
+            for(const auto& cell : group.cells) {
+                SDL_Rect scriptRect = {
+                    cell.second * GRID_SIZE,  // x = col * size
+                    cell.first * GRID_SIZE,   // y = row * size
+                    GRID_SIZE,                // width
+                    GRID_SIZE                 // height
+                };
+                SDL_RenderDrawRect(renderer, &scriptRect);
+            }
+        }
     }
 }
 
@@ -310,6 +324,7 @@ void SceneManager::update(float deltaTime) {
         }
     } else if(currentSceneType == SceneType::STATIC) {
         player.update(deltaTime);
+        checkPlayerInScriptCells();
     }
 }
 
@@ -330,6 +345,23 @@ void SceneManager::loadCollisions(const json& sceneData) {
     }
 }
 
+void SceneManager::loadScriptCells(const json& sceneData) {
+    scriptCells.clear();
+    
+    if(sceneData.contains("ScriptCells")) {
+        for(const auto& group : sceneData["ScriptCells"]) {
+            ScriptCellGroup cellGroup;
+            cellGroup.needUseKey = group.value("needUseKey", true); // По умолчанию true
+            for(const auto& cell : group["cells"]) {
+                int row = cell["row"];
+                int col = cell["col"];
+                cellGroup.cells.emplace_back(row, col);
+            }
+            scriptCells.push_back(cellGroup);
+        }
+    }
+}
+
 bool SceneManager::isCollision(float x, float y) const {
     // Преобразуем координаты в индексы сетки
     int col = static_cast<int>(std::floor(x / GRID_SIZE));
@@ -344,4 +376,66 @@ bool SceneManager::isCollision(float x, float y) const {
     
     return std::find(collisionCells.begin(), collisionCells.end(), 
                     std::make_pair(row, col)) != collisionCells.end();
+}
+
+std::pair<int, int> SceneManager::getCurrentPlayerCell() const {
+    // Получаем координаты точки коллизии игрока
+    float playerCollisionX = player.getX() + player.getSize()/2;
+    float playerCollisionY = player.getY() + player.getSize() + player.getSize()/2 - 4;
+    
+    // Преобразуем координаты в индексы сетки
+    int col = static_cast<int>(std::floor(playerCollisionX / GRID_SIZE));
+    int row = static_cast<int>(std::floor(playerCollisionY / GRID_SIZE));
+    
+    return {row, col};
+}
+
+void SceneManager::checkPlayerInScriptCells() const {
+    float playerLeft = player.getX() + player.getSize()/4;
+    float playerRight = player.getX() + player.getSize()*3/4;
+    float playerY = player.getY() + player.getSize() + player.getSize()/2 - 4;
+    
+    int playerRow = static_cast<int>(std::floor(playerY / GRID_SIZE));
+    int leftCol = static_cast<int>(std::floor(playerLeft / GRID_SIZE));
+    int rightCol = static_cast<int>(std::floor(playerRight / GRID_SIZE));
+    
+    for(size_t i = 0; i < scriptCells.size(); i++) {
+        const auto& group = scriptCells[i];
+        for(const auto& cell : group.cells) {
+            if(cell.first == playerRow && 
+               (cell.second == leftCol || cell.second == rightCol)) {
+                // Если не требуется нажатие клавиши, активируем скрипт сразу
+                if(!group.needUseKey) {
+                    std::cout << "Player automatically used script cell in group " << i 
+                             << " at [" << cell.first << ", " << cell.second << "]" << std::endl;
+                }
+            }
+        }
+    }
+}
+
+void SceneManager::useCurrentCell() {
+    if(currentSceneType != SceneType::STATIC) return;
+    
+    float playerLeft = player.getX() + player.getSize()/4;
+    float playerRight = player.getX() + player.getSize()*3/4;
+    float playerY = player.getY() + player.getSize() + player.getSize()/2 - 4;
+    
+    int playerRow = static_cast<int>(std::floor(playerY / GRID_SIZE));
+    int leftCol = static_cast<int>(std::floor(playerLeft / GRID_SIZE));
+    int rightCol = static_cast<int>(std::floor(playerRight / GRID_SIZE));
+    
+    for(size_t i = 0; i < scriptCells.size(); i++) {
+        const auto& group = scriptCells[i];
+        // Проверяем только те клетки, которые требуют нажатия клавиши
+        if(group.needUseKey) {
+            for(const auto& cell : group.cells) {
+                if(cell.first == playerRow && 
+                   (cell.second == leftCol || cell.second == rightCol)) {
+                    std::cout << "Player manually used script cell in group " << i 
+                             << " at [" << cell.first << ", " << cell.second << "]" << std::endl;
+                }
+            }
+        }
+    }
 }

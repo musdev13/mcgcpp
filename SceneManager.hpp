@@ -37,6 +37,11 @@ struct GridCell {
     }
 };
 
+struct ScriptCellGroup {
+    std::vector<std::pair<int, int>> cells;
+    bool needUseKey;
+};
+
 class SceneManager {
 public:
     SceneManager(SDL_Renderer* renderer);
@@ -52,6 +57,8 @@ public:
     void updatePlayerVelocity(float dx, float dy);
     void update(float deltaTime);
     bool isCollision(float x, float y) const;
+    std::pair<int, int> getCurrentPlayerCell() const;
+    void useCurrentCell();
 
 private:
     SDL_Renderer* renderer;
@@ -72,6 +79,7 @@ private:
     int gridCols;
     Player player;
     std::vector<std::pair<int, int>> collisionCells;
+    std::vector<ScriptCellGroup> scriptCells;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -86,6 +94,8 @@ private:
     void updatePlayerPosition();
     void renderPlayer();
     void loadCollisions(const json& sceneData);
+    void loadScriptCells(const json& sceneData);
+    void checkPlayerInScriptCells() const;
 };
 
 #endif
