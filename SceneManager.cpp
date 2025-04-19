@@ -8,6 +8,7 @@ SceneManager::SceneManager(SDL_Renderer* renderer) : renderer(renderer) {
     backgroundTexture = nullptr;
     gridRows = 0;
     gridCols = 0;
+    dialogSystem = nullptr; // Сначала nullptr
     calculateGrid();
 }
 
@@ -15,6 +16,15 @@ SceneManager::~SceneManager() {
     delete videoPlayer;
     cleanupBackground();
     cleanupLayers();
+    delete dialogSystem;
+}
+
+void SceneManager::setGamePath(const std::string& path) { 
+    gamePath = path;
+    // Создаем DialogSystem после установки пути
+    if(!dialogSystem) {
+        dialogSystem = new DialogSystem(renderer, gamePath);
+    }
 }
 
 bool SceneManager::loadScene(const std::string& sceneName) {
@@ -70,6 +80,7 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     loadScriptCells(sceneData);
     calculateGrid();
     initializePlayer(sceneData);
+    loadDialogGroups(sceneData);
 }
 
 void SceneManager::loadBackgroundImage(const std::string& imagePath) {
@@ -283,6 +294,9 @@ void SceneManager::render() {
             }
         }
     }
+    if(dialogSystem) {
+        dialogSystem->render();
+    }
 }
 
 void SceneManager::initializePlayer(const json& sceneData) {
@@ -326,6 +340,9 @@ void SceneManager::update(float deltaTime) {
     } else if(currentSceneType == SceneType::STATIC) {
         player.update(deltaTime);
         checkPlayerInScriptCells();
+    }
+    if(dialogSystem) {
+        dialogSystem->update(deltaTime);
     }
 }
 
@@ -383,6 +400,26 @@ void SceneManager::loadScriptCells(const json& sceneData) {
                 cellGroup.cells.emplace_back(row, col);
             }
             scriptCells.push_back(cellGroup);
+        }
+    }
+}
+
+void SceneManager::loadDialogGroups(const json& sceneData) {
+    dialogGroups.clear();
+    
+    if(sceneData.contains("DialogGroups")) {
+        for(const auto& groupData : sceneData["DialogGroups"]) {
+            DialogGroup group;
+            group.name = groupData["name"];
+            
+            for(const auto& lineData : groupData["content"]) {
+                DialogLine line;
+                line.title = lineData["title"];
+                line.text = lineData["text"];
+                group.lines.push_back(line);
+            }
+            
+            dialogGroups.push_back(group);
         }
     }
 }
@@ -477,4 +514,24 @@ void SceneManager::executeCommand(const ScriptCommand& command) {
         std::cout << "Script message: " << command.parameter << std::endl;
     }
     // Здесь можно добавить другие команды в будущем
+}
+
+void SceneManager::toggleDialog(const std::string& dialogName) {
+    if(!dialogSystem->isActive()) {
+        for(const auto& group : dialogGroups) {
+            if(group.name == dialogName) {
+                dialogSystem->setCurrentGroup(&group);
+                dialogSystem->showDialog(dialogName);
+                break;
+            }
+        }
+    }
+}
+
+void SceneManager::handleUseKey() {
+    if(dialogSystem && dialogSystem->isActive()) {
+        dialogSystem->handleInput(true);
+    } else {
+        useCurrentCell();
+    }
 }

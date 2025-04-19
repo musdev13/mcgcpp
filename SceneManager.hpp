@@ -9,6 +9,7 @@
 #include "SDL2/SDL_image.h"
 #include "VideoPlayer.hpp"
 #include "Player.hpp"
+#include "DialogSystem.hpp"
 
 using json = nlohmann::json;
 
@@ -61,7 +62,7 @@ public:
     bool loadScene(const std::string& sceneName);
     void update();
     void render();
-    void setGamePath(const std::string& path) { gamePath = path; }
+    void setGamePath(const std::string& path);  // Убираем inline реализацию
     const GridCell* getCellAt(int row, int col) const;
     const GridCell* getCellAtPosition(int x, int y) const;
     void calculateGrid();
@@ -70,6 +71,8 @@ public:
     bool isCollision(float x, float y) const;
     std::pair<int, int> getCurrentPlayerCell() const;
     void useCurrentCell();
+    void toggleDialog(const std::string& dialogName);
+    void handleUseKey();
 
 private:
     SDL_Renderer* renderer;
@@ -92,6 +95,8 @@ private:
     std::vector<std::pair<int, int>> collisionCells;
     std::vector<ScriptCellGroup> scriptCells;
     std::vector<ScriptGroup> scriptGroups;
+    std::vector<DialogGroup> dialogGroups;
+    DialogSystem* dialogSystem;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -111,6 +116,7 @@ private:
     void loadScriptGroups(const json& sceneData);
     void executeScriptGroup(const std::string& groupName);
     void executeCommand(const ScriptCommand& command);
+    void loadDialogGroups(const json& sceneData);
 };
 
 #endif
