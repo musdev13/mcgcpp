@@ -1,5 +1,6 @@
 {
     "type": "static",
+    "fadeAtStart": true,
     "backgroundColor": {
         "r": 0,
         "g": 0,
@@ -67,6 +68,7 @@
     ],
     "InitialScript": [
         {"playerMovement":false},
+        {"wait": 2},
         {"fadeIn": 2},
         {"wait": 3},
         {"playerMovement": true}

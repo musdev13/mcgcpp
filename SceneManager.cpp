@@ -73,6 +73,9 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     backgroundColor.b = bgColor["b"];
     backgroundColor.a = bgColor["a"];
     
+    // Инициализируем начальное затемнение если оно запрошено
+    fadeAlpha = sceneData.value("fadeAtStart", false) ? 1.0f : 0.0f;
+    
     showGrid = sceneData.value("showGrid", false);
     loadLayers(sceneData);
     loadCollisions(sceneData);
