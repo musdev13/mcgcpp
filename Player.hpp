@@ -23,6 +23,8 @@ public:
     void setAnimation(const std::string& state);
     void setSpeed(float newSpeed) { speed = newSpeed; }
     void setCollisionChecker(const SceneManager* manager) { sceneManager = manager; }
+    int getSize() const { return size; }
+    float getScale() const { return scale; }
 
     enum class Direction {
         DOWN,

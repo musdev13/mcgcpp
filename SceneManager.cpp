@@ -243,6 +243,29 @@ void SceneManager::render() {
         }
         if(currentSceneType == SceneType::STATIC) {
             player.render(renderer);
+            
+            // Рендерим коллизии (отладочное отображение)
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Красный цвет для коллизий
+            for(const auto& cell : collisionCells) {
+                SDL_Rect collisionRect = {
+                    cell.second * GRID_SIZE,  // x = col * size
+                    cell.first * GRID_SIZE,   // y = row * size
+                    GRID_SIZE,                // width
+                    GRID_SIZE                 // height
+                };
+                SDL_RenderDrawRect(renderer, &collisionRect);
+            }
+            
+            // Отображаем точку коллизии игрока 
+            float playerCollisionX = player.getX() + player.getSize()/2;
+            float playerCollisionY = player.getY() + player.getSize() + player.getSize()/2 - 4; // Подняли на 4 пикселя
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            SDL_Rect playerPoint = {
+                static_cast<int>(playerCollisionX) - 2,
+                static_cast<int>(playerCollisionY) - 2,
+                4, 4
+            };
+            SDL_RenderFillRect(renderer, &playerPoint);
         }
     }
 }

@@ -117,8 +117,8 @@ void Player::update(float deltaTime) {
     float newX = x + velocityX * speed * deltaTime;
     float newY = y;
     
-    // Проверяем коллизию по X
-    if(!checkCollision(newX + size/2, newY + size)) {
+    // Проверяем коллизию с учетом смещения точки вверх на 4 пикселя
+    if(!checkCollision(newX + size/2, newY + size + size/2 - 4)) {
         x = newX;
     }
 
@@ -126,7 +126,7 @@ void Player::update(float deltaTime) {
     newX = x;
     newY = y + velocityY * speed * deltaTime;
     
-    if(!checkCollision(newX + size/2, newY + size)) {
+    if(!checkCollision(newX + size/2, newY + size + size/2 - 4)) {
         y = newY;
     }
     
