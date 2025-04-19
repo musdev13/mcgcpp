@@ -65,8 +65,7 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     
     showGrid = sceneData.value("showGrid", false);
     loadLayers(sceneData);
-    
-    // Инициализируем сетку только для статических сцен
+    loadCollisions(sceneData);  // Добавляем загрузку коллизий
     calculateGrid();
     initializePlayer(sceneData);
 }
@@ -102,20 +101,16 @@ void SceneManager::cleanupLayers() {
 
 void SceneManager::loadLayers(const json& sceneData) {
     cleanupLayers();
-    
     if (!sceneData.contains("layers")) return;
-    
     for (const auto& layerData : sceneData["layers"]) {
         Layer layer;
         layer.zIndex = layerData.value("z", 0);
         layer.opacity = layerData.value("opacity", 255);
-        
         std::string imagePath = gamePath + "/image/" + layerData["image"].get<std::string>();
         if (loadLayerImage(layer, imagePath)) {
             layers.push_back(layer);
         }
     }
-    
     // Sort layers by z-index
     std::sort(layers.begin(), layers.end(), 
         [](const Layer& a, const Layer& b) { return a.zIndex < b.zIndex; });
@@ -126,11 +121,9 @@ bool SceneManager::loadLayerImage(Layer& layer, const std::string& imagePath) {
     if (surface) {
         // Создаем текстуру с фиксированным размером
         layer.texture = SDL_CreateTextureFromSurface(renderer, surface);
-        
         // Сохраняем оригинальные размеры изображения
         layer.width = surface->w;
         layer.height = surface->h;
-        
         SDL_FreeSurface(surface);
         if (!layer.texture) {
             std::cout << "Failed to create texture from image: " << SDL_GetError() << std::endl;
@@ -146,14 +139,11 @@ void SceneManager::calculateGrid() {
     if(currentSceneType != SceneType::STATIC) {
         return;
     }
-    
     int w, h;
     SDL_GetRendererOutputSize(renderer, &w, &h);
-    
     // Пересчитываем размеры сетки под новый размер окна
     gridCols = w / GRID_SIZE;
     gridRows = h / GRID_SIZE;
-    
     initializeGrid();
 }
 
@@ -178,7 +168,6 @@ const GridCell* SceneManager::getCellAt(int row, int col) const {
     if(currentSceneType != SceneType::STATIC) {
         return nullptr;
     }
-    
     if(row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
         return &grid[row][col];
     }
@@ -190,7 +179,6 @@ const GridCell* SceneManager::getCellAtPosition(int x, int y) const {
     if(currentSceneType != SceneType::STATIC) {
         return nullptr;
     }
-    
     int row = y / GRID_SIZE;
     int col = x / GRID_SIZE;
     return getCellAt(row, col);
@@ -198,13 +186,11 @@ const GridCell* SceneManager::getCellAtPosition(int x, int y) const {
 
 void SceneManager::drawGrid() {
     SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
-    
     // Draw vertical lines
     for(int col = 0; col <= gridCols; col++) {
         int x = col * GRID_SIZE;
         SDL_RenderDrawLine(renderer, x, 0, x, gridRows * GRID_SIZE);
     }
-    
     // Draw horizontal lines
     for(int row = 0; row <= gridRows; row++) {
         int y = row * GRID_SIZE;
@@ -221,7 +207,6 @@ void SceneManager::update() {
                 return;
             }
             nextFrameTime = currentTime + videoPlayer->getFrameDelay();
-            
             if (currentTime > nextFrameTime + videoPlayer->getFrameDelay() * 2) {
                 nextFrameTime = currentTime;
             }
@@ -241,27 +226,21 @@ void SceneManager::render() {
             backgroundColor.b, 
             backgroundColor.a);
         SDL_RenderClear(renderer);
-        
         // Рендерим слои с фиксированным размером
         for(const auto& layer : layers) {
             SDL_SetTextureAlphaMod(layer.texture, layer.opacity);
-            
             // Создаем прямоугольник назначения с оригинальными размерами
             SDL_Rect dstRect = {0, 0, layer.width, layer.height};
-            
             // Центрируем изображение, если оно меньше окна
             int w, h;
             SDL_GetRendererOutputSize(renderer, &w, &h);
             dstRect.x = (w - layer.width) / 2;
             dstRect.y = (h - layer.height) / 2;
-            
             SDL_RenderCopy(renderer, layer.texture, nullptr, &dstRect);
         }
-        
         if(showGrid && currentSceneType == SceneType::STATIC) {
             drawGrid();
         }
-        
         if(currentSceneType == SceneType::STATIC) {
             player.render(renderer);
         }
@@ -276,16 +255,16 @@ void SceneManager::initializePlayer(const json& sceneData) {
     float y = playerData.value("row", 0) * GRID_SIZE;
     player.setPosition(x, y, GRID_SIZE);
     
-    // Set player speed from JSON
     float speed = playerData.value("speed", 100.0f);
     player.setSpeed(speed);
     
-    // Load player sprite
     std::string playerSkin = playerData.value("skin", "marko");
     std::string spritePath = gamePath + "/skin/" + playerSkin + "/spritesheet.png";
     if (!player.loadSprite(renderer, spritePath)) {
         std::cout << "Failed to load player skin: " << playerSkin << std::endl;
     }
+    
+    player.setCollisionChecker(this);
 }
 
 void SceneManager::updatePlayerVelocity(float dx, float dy) {
@@ -312,5 +291,34 @@ void SceneManager::update(float deltaTime) {
 }
 
 void SceneManager::updatePlayerPosition() {
-    player.update(1.0f / 40.0f);  // Changed from 30 to 40 FPS
+    player.update(1.0f / 40.0f);
+}
+
+void SceneManager::loadCollisions(const json& sceneData) {
+    collisionCells.clear();
+    
+    if(sceneData.contains("collisions")) {
+        for(const auto& cell : sceneData["collisions"]) {
+            int row = cell["row"];
+            int col = cell["col"];
+            collisionCells.emplace_back(row, col);
+            std::cout << "Added collision at: [" << row << ", " << col << "]" << std::endl;
+        }
+    }
+}
+
+bool SceneManager::isCollision(float x, float y) const {
+    // Преобразуем координаты в индексы сетки
+    int col = static_cast<int>(std::floor(x / GRID_SIZE));
+    int row = static_cast<int>(std::floor(y / GRID_SIZE));
+    
+    // Проверяем выход за пределы сетки
+    if(row < 0 || row >= gridRows || col < 0 || col >= gridCols) {
+        return true; // Считаем выход за пределы карты коллизией
+    }
+    
+    std::cout << "Checking collision at grid: [" << row << ", " << col << "]" << std::endl;
+    
+    return std::find(collisionCells.begin(), collisionCells.end(), 
+                    std::make_pair(row, col)) != collisionCells.end();
 }

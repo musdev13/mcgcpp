@@ -51,6 +51,7 @@ public:
     void calculateGrid();
     void updatePlayerVelocity(float dx, float dy);
     void update(float deltaTime);
+    bool isCollision(float x, float y) const;
 
 private:
     SDL_Renderer* renderer;
@@ -70,6 +71,7 @@ private:
     int gridRows;
     int gridCols;
     Player player;
+    std::vector<std::pair<int, int>> collisionCells;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -83,6 +85,7 @@ private:
     void initializePlayer(const json& sceneData);
     void updatePlayerPosition();
     void renderPlayer();
+    void loadCollisions(const json& sceneData);
 };
 
 #endif

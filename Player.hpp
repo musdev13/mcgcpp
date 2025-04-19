@@ -4,6 +4,8 @@
 #include "SDL2/SDL.h"
 #include <string>
 
+class SceneManager;  // Forward declaration
+
 class Player {
 public:
     Player();
@@ -20,6 +22,7 @@ public:
     bool loadSprite(SDL_Renderer* renderer, const std::string& path);
     void setAnimation(const std::string& state);
     void setSpeed(float newSpeed) { speed = newSpeed; }
+    void setCollisionChecker(const SceneManager* manager) { sceneManager = manager; }
 
     enum class Direction {
         DOWN,
@@ -49,6 +52,9 @@ private:
     Direction lastDirection;
     
     float scale;  // Add this new property
+
+    const SceneManager* sceneManager = nullptr;
+    bool checkCollision(float newX, float newY) const;
 
     void updateAnimation(float deltaTime);
     void updateAnimationState();

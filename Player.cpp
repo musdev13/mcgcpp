@@ -1,5 +1,7 @@
 #include "Player.hpp"
 #include "SDL2/SDL_image.h"
+#include "SceneManager.hpp"  
+#include <iostream>  // Add this line
 
 Player::Player() : 
     x(0),
@@ -111,9 +113,22 @@ void Player::setDirection(float dx, float dy) {
 }
 
 void Player::update(float deltaTime) {
-    // Update position
-    x += velocityX * speed * deltaTime;
-    y += velocityY * speed * deltaTime;
+    // Проверяем коллизии отдельно для X и Y направлений
+    float newX = x + velocityX * speed * deltaTime;
+    float newY = y;
+    
+    // Проверяем коллизию по X
+    if(!checkCollision(newX + size/2, newY + size)) {
+        x = newX;
+    }
+
+    // Проверяем коллизию по Y
+    newX = x;
+    newY = y + velocityY * speed * deltaTime;
+    
+    if(!checkCollision(newX + size/2, newY + size)) {
+        y = newY;
+    }
     
     rect.x = (int)(x - (rect.w - size) / 2);
     rect.y = (int)(y - (rect.h - size) / 2);
@@ -132,6 +147,15 @@ void Player::update(float deltaTime) {
     
     // Always update animation frames
     updateAnimation(deltaTime);
+}
+
+bool Player::checkCollision(float newX, float newY) const {
+    if(!sceneManager) return false;
+    bool collision = sceneManager->isCollision(newX, newY);
+    if(collision) {
+        std::cout << "Collision at pixel: (" << newX << ", " << newY << ")" << std::endl;
+    }
+    return collision;
 }
 
 void Player::updateAnimation(float deltaTime) {

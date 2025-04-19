@@ -25,5 +25,13 @@
         "direction": "down",
         "speed": 125
     },
-    "showGrid": true
+    "showGrid": true,
+    "collisions": [
+        {"row": 5, "col": 5},
+        {"row": 5, "col": 6},
+        {"row": 5, "col": 7},
+        {"row": 6, "col": 5},
+        {"row": 7, "col": 5},
+        {"row": 8, "col": 14}
+    ]
 }
