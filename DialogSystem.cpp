@@ -16,10 +16,10 @@ DialogSystem::DialogSystem(SDL_Renderer* renderer, const std::string& gamePath)
       charDelay(0.05f),
       instantPrint(false),
       font(nullptr),
-      fontSize(24),
+      fontSize(36),  // Изменили с 32 на 36 для основного текста
       textColor{255, 255, 255, 255},
       titleColor{255, 200, 0, 255},
-      textPadding(20)
+      textPadding(30)  // Увеличили с 20 до 30
 {
     if(TTF_Init() == -1) {
         std::cout << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
@@ -74,6 +74,9 @@ void DialogSystem::renderText() {
 
     const auto& line = currentGroup->lines[currentLineIndex];
     
+    // Устанавливаем размер шрифта для заголовка на 12 пикселей больше основного
+    TTF_SetFontSize(font, fontSize + 12);
+    
     // Рендерим заголовок
     SDL_Surface* titleSurface = TTF_RenderText_Blended(font, line.title.c_str(), titleColor);
     if(titleSurface) {
@@ -89,13 +92,16 @@ void DialogSystem::renderText() {
         SDL_DestroyTexture(titleTexture);
     }
 
+    // Возвращаем размер шрифта для основного текста
+    TTF_SetFontSize(font, fontSize);
+    
     // Рендерим текст
     SDL_Surface* textSurface = TTF_RenderText_Blended(font, line.displayedText.c_str(), textColor);
     if(textSurface) {
         SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_Rect textRect = {
             textPadding,
-            static_cast<int>(currentY) + textPadding + fontSize + 10, // 10 пикселей между заголовком и текстом
+            static_cast<int>(currentY) + textPadding + fontSize + 15, // Увеличили отступ между заголовком и текстом с 10 до 15
             textSurface->w,
             textSurface->h
         };
