@@ -81,7 +81,7 @@ void Game::handleEvents() {
                 }
                 else if(event.key.keysym.sym == SDLK_z) {
                     if(sceneManager) {
-                        sceneManager->useCurrentCell();
+                        sceneManager->handleUseKey();
                     }
                 }
                 else if(event.key.keysym.sym == SDLK_d) {

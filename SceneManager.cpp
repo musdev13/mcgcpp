@@ -530,7 +530,7 @@ void SceneManager::toggleDialog(const std::string& dialogName) {
 
 void SceneManager::handleUseKey() {
     if(dialogSystem && dialogSystem->isActive()) {
-        dialogSystem->handleInput(true);
+        dialogSystem->handleInput(true); // Этот вызов должен работать
     } else {
         useCurrentCell();
     }

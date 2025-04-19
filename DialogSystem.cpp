@@ -162,11 +162,13 @@ void DialogSystem::updateTextPrinting(float deltaTime) {
 void DialogSystem::handleInput(bool useKeyPressed) {
     if(!active || state != DialogState::Stable) return;
 
-    const auto& line = currentGroup->lines[currentLineIndex];
-    if(line.displayedText.length() < line.text.length()) {
-        instantPrint = true;
-    } else {
-        nextLine();
+    if(useKeyPressed) {
+        const auto& line = currentGroup->lines[currentLineIndex];
+        if(line.displayedText.length() < line.text.length()) {
+            instantPrint = true;
+        } else {
+            nextLine();
+        }
     }
 }
 
