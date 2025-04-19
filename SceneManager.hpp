@@ -37,9 +37,20 @@ struct GridCell {
     }
 };
 
+struct ScriptCommand {
+    std::string command;
+    std::string parameter;
+};
+
+struct ScriptGroup {
+    std::string name;
+    std::vector<ScriptCommand> commands;
+};
+
 struct ScriptCellGroup {
     std::vector<std::pair<int, int>> cells;
     bool needUseKey;
+    std::string scriptGroupName;
 };
 
 class SceneManager {
@@ -80,6 +91,7 @@ private:
     Player player;
     std::vector<std::pair<int, int>> collisionCells;
     std::vector<ScriptCellGroup> scriptCells;
+    std::vector<ScriptGroup> scriptGroups;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -96,6 +108,9 @@ private:
     void loadCollisions(const json& sceneData);
     void loadScriptCells(const json& sceneData);
     void checkPlayerInScriptCells() const;
+    void loadScriptGroups(const json& sceneData);
+    void executeScriptGroup(const std::string& groupName);
+    void executeCommand(const ScriptCommand& command);
 };
 
 #endif

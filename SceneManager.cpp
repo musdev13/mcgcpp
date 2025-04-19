@@ -66,7 +66,8 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     showGrid = sceneData.value("showGrid", false);
     loadLayers(sceneData);
     loadCollisions(sceneData);
-    loadScriptCells(sceneData); // Добавили загрузку скрипт-клеток
+    loadScriptGroups(sceneData);
+    loadScriptCells(sceneData);
     calculateGrid();
     initializePlayer(sceneData);
 }
@@ -345,13 +346,37 @@ void SceneManager::loadCollisions(const json& sceneData) {
     }
 }
 
+void SceneManager::loadScriptGroups(const json& sceneData) {
+    scriptGroups.clear();
+    
+    if(sceneData.contains("ScriptGroups")) {
+        for(const auto& groupData : sceneData["ScriptGroups"]) {
+            ScriptGroup group;
+            group.name = groupData["name"];
+            
+            for(const auto& cmdData : groupData["script"]) {
+                for(auto it = cmdData.begin(); it != cmdData.end(); ++it) {
+                    ScriptCommand cmd;
+                    cmd.command = it.key();
+                    cmd.parameter = it.value();
+                    group.commands.push_back(cmd);
+                }
+            }
+            
+            scriptGroups.push_back(group);
+        }
+    }
+}
+
 void SceneManager::loadScriptCells(const json& sceneData) {
     scriptCells.clear();
     
     if(sceneData.contains("ScriptCells")) {
         for(const auto& group : sceneData["ScriptCells"]) {
             ScriptCellGroup cellGroup;
-            cellGroup.needUseKey = group.value("needUseKey", true); // По умолчанию true
+            cellGroup.needUseKey = group.value("needUseKey", true);
+            cellGroup.scriptGroupName = group["scriptGroup"];
+            
             for(const auto& cell : group["cells"]) {
                 int row = cell["row"];
                 int col = cell["col"];
@@ -372,7 +397,7 @@ bool SceneManager::isCollision(float x, float y) const {
         return true; // Считаем выход за пределы карты коллизией
     }
     
-    std::cout << "Checking collision at grid: [" << row << ", " << col << "]" << std::endl;
+    // std::cout << "Checking collision at grid: [" << row << ", " << col << "]" << std::endl;
     
     return std::find(collisionCells.begin(), collisionCells.end(), 
                     std::make_pair(row, col)) != collisionCells.end();
@@ -404,10 +429,8 @@ void SceneManager::checkPlayerInScriptCells() const {
         for(const auto& cell : group.cells) {
             if(cell.first == playerRow && 
                (cell.second == leftCol || cell.second == rightCol)) {
-                // Если не требуется нажатие клавиши, активируем скрипт сразу
                 if(!group.needUseKey) {
-                    std::cout << "Player automatically used script cell in group " << i 
-                             << " at [" << cell.first << ", " << cell.second << "]" << std::endl;
+                    const_cast<SceneManager*>(this)->executeScriptGroup(group.scriptGroupName);
                 }
             }
         }
@@ -427,15 +450,31 @@ void SceneManager::useCurrentCell() {
     
     for(size_t i = 0; i < scriptCells.size(); i++) {
         const auto& group = scriptCells[i];
-        // Проверяем только те клетки, которые требуют нажатия клавиши
         if(group.needUseKey) {
             for(const auto& cell : group.cells) {
                 if(cell.first == playerRow && 
                    (cell.second == leftCol || cell.second == rightCol)) {
-                    std::cout << "Player manually used script cell in group " << i 
-                             << " at [" << cell.first << ", " << cell.second << "]" << std::endl;
+                    executeScriptGroup(group.scriptGroupName);
                 }
             }
         }
     }
+}
+
+void SceneManager::executeScriptGroup(const std::string& groupName) {
+    for(const auto& group : scriptGroups) {
+        if(group.name == groupName) {
+            for(const auto& command : group.commands) {
+                executeCommand(command);
+            }
+            break;
+        }
+    }
+}
+
+void SceneManager::executeCommand(const ScriptCommand& command) {
+    if(command.command == "showDebugMessage") {
+        std::cout << "Script message: " << command.parameter << std::endl;
+    }
+    // Здесь можно добавить другие команды в будущем
 }

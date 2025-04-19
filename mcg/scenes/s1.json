@@ -34,8 +34,18 @@
         {"row": 7, "col": 5},
         {"row": 8, "col": 14}
     ],
+    "ScriptGroups":[
+        {
+            "name": "testScript",
+            "script": [
+                {"showDebugMessage": "It works!"},
+                {"showDebugMessage": "It works fine!"}
+            ]
+        }
+    ],
     "ScriptCells": [
         {
+            "scriptGroup":"testScript",
             "cells": [
                 {"row":6, "col":7}
             ],
