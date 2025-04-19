@@ -41,6 +41,10 @@ struct GridCell {
 struct ScriptCommand {
     std::string command;
     std::string parameter;
+    bool isComplete;
+    bool isStarted;  // Добавляем флаг для отслеживания начала выполнения команды
+    
+    ScriptCommand() : isComplete(false), isStarted(false) {}
 };
 
 struct ScriptGroup {
@@ -97,6 +101,7 @@ private:
     std::vector<ScriptGroup> scriptGroups;
     std::vector<DialogGroup> dialogGroups;
     DialogSystem* dialogSystem;
+    std::vector<ScriptCommand> activeCommands; // Очередь активных команд
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -117,6 +122,7 @@ private:
     void executeScriptGroup(const std::string& groupName);
     void executeCommand(const ScriptCommand& command);
     void loadDialogGroups(const json& sceneData);
+    void updateActiveCommands(); // Новый метод для обновления команд
 };
 
 #endif

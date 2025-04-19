@@ -30,7 +30,8 @@ public:
     void showDialog(const std::string& dialogGroupName);
     void setCurrentGroup(const DialogGroup* group);
     bool isActive() const { return active; }
-    bool isAnimating() const { return state != DialogState::Stable; }
+    bool isAnimating() const { return state == DialogState::Opening || state == DialogState::Closing; }
+    bool wasJustClosed() const { return state == DialogState::Hidden && !active; }
 
 private:
     SDL_Renderer* renderer;
