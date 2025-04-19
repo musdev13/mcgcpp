@@ -1,9 +1,9 @@
 {
     "type": "static",
     "backgroundColor": {
-        "r": 100,
-        "g": 149,
-        "b": 237,
+        "r": 0,
+        "g": 0,
+        "b": 0,
         "a": 255
     },
     "layers": [

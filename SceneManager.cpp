@@ -124,7 +124,13 @@ void SceneManager::loadLayers(const json& sceneData) {
 bool SceneManager::loadLayerImage(Layer& layer, const std::string& imagePath) {
     SDL_Surface* surface = IMG_Load(imagePath.c_str());
     if (surface) {
+        // Создаем текстуру с фиксированным размером
         layer.texture = SDL_CreateTextureFromSurface(renderer, surface);
+        
+        // Сохраняем оригинальные размеры изображения
+        layer.width = surface->w;
+        layer.height = surface->h;
+        
         SDL_FreeSurface(surface);
         if (!layer.texture) {
             std::cout << "Failed to create texture from image: " << SDL_GetError() << std::endl;
@@ -137,7 +143,6 @@ bool SceneManager::loadLayerImage(Layer& layer, const std::string& imagePath) {
 }
 
 void SceneManager::calculateGrid() {
-    // Вычисляем сетку только если текущая сцена статическая
     if(currentSceneType != SceneType::STATIC) {
         return;
     }
@@ -145,6 +150,7 @@ void SceneManager::calculateGrid() {
     int w, h;
     SDL_GetRendererOutputSize(renderer, &w, &h);
     
+    // Пересчитываем размеры сетки под новый размер окна
     gridCols = w / GRID_SIZE;
     gridRows = h / GRID_SIZE;
     
@@ -236,10 +242,20 @@ void SceneManager::render() {
             backgroundColor.a);
         SDL_RenderClear(renderer);
         
-        // Render all layers in order
+        // Рендерим слои с фиксированным размером
         for(const auto& layer : layers) {
             SDL_SetTextureAlphaMod(layer.texture, layer.opacity);
-            SDL_RenderCopy(renderer, layer.texture, nullptr, nullptr);
+            
+            // Создаем прямоугольник назначения с оригинальными размерами
+            SDL_Rect dstRect = {0, 0, layer.width, layer.height};
+            
+            // Центрируем изображение, если оно меньше окна
+            int w, h;
+            SDL_GetRendererOutputSize(renderer, &w, &h);
+            dstRect.x = (w - layer.width) / 2;
+            dstRect.y = (h - layer.height) / 2;
+            
+            SDL_RenderCopy(renderer, layer.texture, nullptr, &dstRect);
         }
         
         if(showGrid && currentSceneType == SceneType::STATIC) {

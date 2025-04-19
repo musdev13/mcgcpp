@@ -21,8 +21,10 @@ struct Layer {
     SDL_Texture* texture;
     int zIndex;
     Uint8 opacity;
+    int width;   // добавляем поле для хранения ширины
+    int height;  // добавляем поле для хранения высоты
     
-    Layer() : texture(nullptr), zIndex(0), opacity(255) {}
+    Layer() : texture(nullptr), zIndex(0), opacity(255), width(0), height(0) {}
 };
 
 struct GridCell {

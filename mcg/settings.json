@@ -1,3 +1,9 @@
 {
-    "initialScene": "s1"
+    "initialScene": "s1",
+    "window": {
+        "width": 1024,
+        "height": 768,
+        "title": "MCG",
+        "fullscreen": false
+    }
 }

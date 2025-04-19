@@ -1,9 +1,13 @@
 #include "Game.hpp"
 #include <string>
+#include <fstream>
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
 
 Game *game = nullptr;
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     std::string gamePath = ".";
 
     // Обработка аргументов командной строки
@@ -16,7 +20,35 @@ int main(int argc, char* argv[]){
     }
 
     game = new Game();
-    game->init("title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, false, gamePath);
+
+    // Read window settings from config
+    std::string settingsPath = gamePath + "/settings.json";
+    std::ifstream settingsFile(settingsPath);
+    
+    int width = 800;
+    int height = 600;
+    bool fullscreen = false;
+    std::string title = "Game";
+
+    if (settingsFile.is_open()) {
+        try {
+            json settings;
+            settingsFile >> settings;
+            
+            if (settings.contains("window")) {
+                const auto& window = settings["window"];
+                width = window.value("width", 800);
+                height = window.value("height", 600);
+                fullscreen = window.value("fullscreen", false);
+                title = window.value("title", "Game");
+            }
+        } catch (const std::exception& e) {
+            std::cout << "Error parsing settings.json: " << e.what() << std::endl;
+        }
+    }
+
+    game->init(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+               width, height, fullscreen, gamePath);
 
     const int FPS = 40;  // Changed from 30 to 40
     const int frameDelay = 1000 / FPS;
