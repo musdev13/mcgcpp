@@ -18,8 +18,9 @@ int main(int argc, char* argv[]){
     game = new Game();
     game->init("title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, false, gamePath);
 
-    const int FPS = 30;
+    const int FPS = 40;  // Changed from 30 to 40
     const int frameDelay = 1000 / FPS;
+
     Uint32 frameStart;
     int frameTime;
 

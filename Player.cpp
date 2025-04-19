@@ -66,11 +66,12 @@ void Player::setPosition(float newX, float newY, int newSize) {
 }
 
 void Player::setAnimation(const std::string& state) {
-    bool stateChanged = (currentState != state);
+    // Remove unused variable stateChanged
     currentState = state;
     
-    // Only reset animation if state or direction changed
-    int row;
+    // Initialize row with a default value
+    int row = 0;
+    
     if(state == "walk") {
         switch(currentDirection) {
             case Direction::DOWN:  row = 0; break;
@@ -101,10 +102,11 @@ void Player::setDirection(float dx, float dy) {
         else if(dy > 0) newDirection = Direction::DOWN;
     }
     
-    if(dx != 0 || dy != 0 && newDirection != currentDirection) {
+    // Fix operator precedence with parentheses
+    if((dx != 0 || dy != 0) && newDirection != currentDirection) {
         currentDirection = newDirection;
         lastDirection = newDirection;
-        setAnimation("walk"); // Only trigger animation change when direction changes
+        setAnimation("walk");
     }
 }
 

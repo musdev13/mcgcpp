@@ -83,7 +83,7 @@ void Game::handleEvents() {
 void Game::update() {
     if(sceneManager) {
         handleMovementKeys();
-        sceneManager->update(1.0f / 30.0f); // Pass fixed deltaTime for 30 FPS
+        sceneManager->update(1.0f / 40.0f); // Changed from 30 to 40 FPS
     }
 }
 

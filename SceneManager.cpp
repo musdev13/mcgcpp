@@ -296,5 +296,5 @@ void SceneManager::update(float deltaTime) {
 }
 
 void SceneManager::updatePlayerPosition() {
-    player.update(1.0f / 30.0f);  // Use fixed timestep
+    player.update(1.0f / 40.0f);  // Changed from 30 to 40 FPS
 }
