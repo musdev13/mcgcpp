@@ -417,8 +417,9 @@ void SceneManager::loadDialogGroups(const json& sceneData) {
                 DialogLine line;
                 line.title = lineData["title"];
                 line.text = lineData["text"];
-                line.avatar = lineData.value("avatar", "none"); // Добавляем загрузку пути к аватару
-                line.displayedText = ""; // Инициализируем пустым значением
+                line.avatar = lineData.value("avatar", "none");
+                line.animDuration = lineData.value("animDuration", 1.0f); // Добавляем загрузку времени анимации
+                line.displayedText = "";
                 group.lines.push_back(line);
             }
             

@@ -166,6 +166,8 @@ void DialogSystem::updateTextPrinting(float deltaTime) {
 
     if(line.displayedText.length() < line.text.length()) {
         textTimer += deltaTime;
+        // Вычисляем задержку символа на основе длины текста и желаемой продолжительности
+        float charDelay = line.animDuration / line.text.length();
         if(textTimer >= charDelay) {
             textTimer = 0;
             line.displayedText += line.text[line.displayedText.length()];

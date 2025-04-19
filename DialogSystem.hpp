@@ -11,10 +11,11 @@ struct DialogLine {
     std::string title;
     std::string text;
     std::string avatar;  // Путь к аватару или "none"
+    float animDuration;  // Добавляем время анимации в секундах
     mutable std::string displayedText;
     mutable SDL_Texture* avatarTexture;  // Кэшированная текстура аватара
     
-    DialogLine() : avatarTexture(nullptr) {}
+    DialogLine() : avatarTexture(nullptr), animDuration(1.0f) {}
 };
 
 struct DialogGroup {
