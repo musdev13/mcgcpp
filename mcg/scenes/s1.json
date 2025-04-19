@@ -8,7 +8,12 @@
     },
     "layers": [
         {
-            "image": "bg.png",
+            "image": "s1/bg.png",
+            "z": 1,
+            "opacity": 255
+        },
+        {
+            "image": "s1/bg_1.png",
             "z": 0,
             "opacity": 255
         }
@@ -17,7 +22,8 @@
         "row": 6,
         "col": 7,
         "skin": "marko",
-        "direction": "down"
+        "direction": "down",
+        "speed": 125
     },
     "showGrid": true
 }

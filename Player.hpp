@@ -19,6 +19,7 @@ public:
 
     bool loadSprite(SDL_Renderer* renderer, const std::string& path);
     void setAnimation(const std::string& state);
+    void setSpeed(float newSpeed) { speed = newSpeed; }
 
     enum class Direction {
         DOWN,

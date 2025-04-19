@@ -6,7 +6,7 @@ Player::Player() :
     y(0),
     velocityX(0),
     velocityY(0),
-    speed(200.0f), // pixels per second
+    speed(100.0f), // Reduced from 200.0f to 100.0f pixels per second
     color{0, 0, 255, 255},
     size(0),
     spriteSheet(nullptr),

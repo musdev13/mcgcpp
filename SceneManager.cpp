@@ -256,12 +256,16 @@ void SceneManager::initializePlayer(const json& sceneData) {
     if (!sceneData.contains("player")) return;
     
     auto playerData = sceneData["player"];
-    float x = playerData.value("col", 0) * GRID_SIZE; // Convert grid position to pixels
+    float x = playerData.value("col", 0) * GRID_SIZE;
     float y = playerData.value("row", 0) * GRID_SIZE;
     player.setPosition(x, y, GRID_SIZE);
     
-    // Load player sprite using skin from JSON
-    std::string playerSkin = playerData.value("skin", "marko"); // Default to "marko" if not specified
+    // Set player speed from JSON
+    float speed = playerData.value("speed", 100.0f);
+    player.setSpeed(speed);
+    
+    // Load player sprite
+    std::string playerSkin = playerData.value("skin", "marko");
     std::string spritePath = gamePath + "/skin/" + playerSkin + "/spritesheet.png";
     if (!player.loadSprite(renderer, spritePath)) {
         std::cout << "Failed to load player skin: " << playerSkin << std::endl;
