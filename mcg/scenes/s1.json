@@ -47,8 +47,10 @@
         {
             "name": "testScript",
             "script": [
+                {"playerMovement": false},
                 {"showDialog": "testDialog"},
                 {"wait": 3},
+                {"playerMovement": true},
                 {"showDebugMessage": "It works!"},
                 {"showDebugMessage": "It works fine!"}
             ]

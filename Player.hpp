@@ -18,7 +18,7 @@ public:
     void setVelocity(float vx, float vy) { velocityX = vx; velocityY = vy; }
     float getX() const { return x; }
     float getY() const { return y; }
-
+    void setMovementEnabled(bool enabled) { movementEnabled = enabled; }
     bool loadSprite(SDL_Renderer* renderer, const std::string& path);
     void setAnimation(const std::string& state);
     void setSpeed(float newSpeed) { speed = newSpeed; }
@@ -52,14 +52,12 @@ private:
     
     Direction currentDirection;
     Direction lastDirection;
-    
-    float scale;  // Add this new property
+    float scale;
+    bool movementEnabled = true;
 
     const SceneManager* sceneManager = nullptr;
     bool checkCollision(float newX, float newY) const;
-
     void updateAnimation(float deltaTime);
-    void updateAnimationState();
     void setDirection(float dx, float dy);
 };
 

@@ -113,17 +113,23 @@ void Player::setDirection(float dx, float dy) {
 }
 
 void Player::update(float deltaTime) {
-    // Проверяем коллизии отдельно для X и Y направлений
+    if (!movementEnabled) {
+        velocityX = 0;
+        velocityY = 0;
+        updateAnimation(deltaTime);
+        return;
+    }
+
     float newX = x + velocityX * speed * deltaTime;
     float newY = y;
     
-    // Создаем три точки коллизии по горизонтальной линии
-    float centerY = y + size + size/2 - 4;  // Смещение вверх на 4 пикселя как раньше
-    float leftX = newX + size/4;            // Левая точка на 1/4 ширины
-    float centerX = newX + size/2;          // Центральная точка
-    float rightX = newX + size*3/4;         // Правая точка на 3/4 ширины
+    // Get player collision points
+    float centerY = y + size + size/2 - 4;
+    float leftX = newX + size/4;
+    float centerX = newX + size/2;
+    float rightX = newX + size*3/4;
     
-    // Проверяем все три точки на коллизию
+    // Проверяем коллизию по X
     if(!checkCollision(leftX, centerY) && 
        !checkCollision(centerX, centerY) && 
        !checkCollision(rightX, centerY)) {
@@ -152,7 +158,7 @@ void Player::update(float deltaTime) {
     // Update direction
     setDirection(velocityX, velocityY);
     
-    // Update animation based on movement
+    // Update animation
     if(velocityX != 0 || velocityY != 0) {
         if(currentState != "walk") {
             setAnimation("walk");
@@ -161,7 +167,6 @@ void Player::update(float deltaTime) {
         setAnimation("idle");
     }
     
-    // Always update animation frames
     updateAnimation(deltaTime);
 }
 

@@ -544,13 +544,16 @@ void SceneManager::startCommand(ScriptCommand& command) {
         command.isComplete = true;
     } else if (command.command == "wait") {
         command.time_left = static_cast<float>(command.parameter.get<double>());
+    } else if (command.command == "playerMovement") {
+        player.setMovementEnabled(command.parameter.get<bool>());
+        command.isComplete = true;
     }
 }
 
 bool SceneManager::isCommandComplete(const ScriptCommand& command) const {
     if (command.command == "showDialog") {
         return !dialogSystem->isActive();
-    } else if (command.command == "showDebugMessage") {
+    } else if (command.command == "showDebugMessage" || command.command == "playerMovement") {
         return command.isComplete;
     } else if (command.command == "wait") {
         return command.isComplete;
