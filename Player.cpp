@@ -117,8 +117,16 @@ void Player::update(float deltaTime) {
     float newX = x + velocityX * speed * deltaTime;
     float newY = y;
     
-    // Проверяем коллизию с учетом смещения точки вверх на 4 пикселя
-    if(!checkCollision(newX + size/2, newY + size + size/2 - 4)) {
+    // Создаем три точки коллизии по горизонтальной линии
+    float centerY = y + size + size/2 - 4;  // Смещение вверх на 4 пикселя как раньше
+    float leftX = newX + size/4;            // Левая точка на 1/4 ширины
+    float centerX = newX + size/2;          // Центральная точка
+    float rightX = newX + size*3/4;         // Правая точка на 3/4 ширины
+    
+    // Проверяем все три точки на коллизию
+    if(!checkCollision(leftX, centerY) && 
+       !checkCollision(centerX, centerY) && 
+       !checkCollision(rightX, centerY)) {
         x = newX;
     }
 
@@ -126,7 +134,15 @@ void Player::update(float deltaTime) {
     newX = x;
     newY = y + velocityY * speed * deltaTime;
     
-    if(!checkCollision(newX + size/2, newY + size + size/2 - 4)) {
+    // Обновляем Y-координаты для точек
+    centerY = newY + size + size/2 - 4;
+    leftX = x + size/4;
+    centerX = x + size/2;
+    rightX = x + size*3/4;
+    
+    if(!checkCollision(leftX, centerY) && 
+       !checkCollision(centerX, centerY) && 
+       !checkCollision(rightX, centerY)) {
         y = newY;
     }
     
@@ -174,6 +190,40 @@ void Player::updateAnimation(float deltaTime) {
 void Player::render(SDL_Renderer* renderer) const {
     if(spriteSheet) {
         SDL_RenderCopy(renderer, spriteSheet, &srcRect, &rect);
+        
+        // Отрисовка точек коллизии (для отладки)
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        
+        float centerY = y + size + size/2 - 4;
+        float leftX = x + size/4;
+        float centerX = x + size/2;
+        float rightX = x + size*3/4;
+        
+        // Рисуем линию между точками
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        SDL_RenderDrawLine(renderer, 
+            static_cast<int>(leftX), 
+            static_cast<int>(centerY),
+            static_cast<int>(rightX), 
+            static_cast<int>(centerY)
+        );
+        
+        // Рисуем точки
+        SDL_Rect point;
+        point.w = 4;
+        point.h = 4;
+        
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);  // Красные точки
+        
+        point.x = static_cast<int>(leftX) - 2;
+        point.y = static_cast<int>(centerY) - 2;
+        SDL_RenderFillRect(renderer, &point);
+        
+        point.x = static_cast<int>(centerX) - 2;
+        SDL_RenderFillRect(renderer, &point);
+        
+        point.x = static_cast<int>(rightX) - 2;
+        SDL_RenderFillRect(renderer, &point);
     } else {
         // Fallback to rectangle rendering
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);

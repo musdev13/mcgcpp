@@ -245,7 +245,7 @@ void SceneManager::render() {
             player.render(renderer);
             
             // Рендерим коллизии (отладочное отображение)
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Красный цвет для коллизий
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128); // Полупрозрачный красный
             for(const auto& cell : collisionCells) {
                 SDL_Rect collisionRect = {
                     cell.second * GRID_SIZE,  // x = col * size
