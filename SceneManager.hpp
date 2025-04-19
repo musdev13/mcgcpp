@@ -109,6 +109,12 @@ private:
     std::vector<ScriptCommand> activeCommands; // Очередь активных команд
     InitialScriptData initialScript;
     
+    // Добавляем поля для эффекта fade
+    float fadeAlpha = 0.0f;
+    float fadeTarget = 0.0f;
+    float fadeSpeed = 0.0f;
+    bool isFading = false;
+
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
     void drawGrid();
@@ -132,6 +138,8 @@ private:
     bool isCommandComplete(const ScriptCommand& command) const;
     void startCommand(ScriptCommand& command);
     void loadInitialScript(const json& sceneData);
+    void renderFadeEffect();
+    bool updateFade(float deltaTime);
 };
 
 #endif

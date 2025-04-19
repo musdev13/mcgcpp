@@ -318,30 +318,37 @@ void SceneManager::render() {
     if(dialogSystem) {
         dialogSystem->render();
     }
+    
+    // Рендерим эффект затемнения поверх всего
+    renderFadeEffect();
 }
 
-void SceneManager::initializePlayer(const json& sceneData) {
-    if (!sceneData.contains("player")) return;
+void SceneManager::renderFadeEffect() {
+    if (fadeAlpha > 0.0f) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, static_cast<Uint8>(fadeAlpha * 255));
+        SDL_Rect fullscreen = {0, 0, 0, 0};
+        SDL_GetRendererOutputSize(renderer, &fullscreen.w, &fullscreen.h);
+        SDL_RenderFillRect(renderer, &fullscreen);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    }
+}
+
+bool SceneManager::updateFade(float deltaTime) {
+    if (!isFading) return false;
+
+    float prevAlpha = fadeAlpha;
+    fadeAlpha += fadeSpeed * deltaTime;
     
-    auto playerData = sceneData["player"];
-    float x = playerData.value("col", 0) * GRID_SIZE;
-    float y = playerData.value("row", 0) * GRID_SIZE;
-    player.setPosition(x, y, GRID_SIZE);
-    
-    float speed = playerData.value("speed", 100.0f);
-    player.setSpeed(speed);
-    
-    std::string playerSkin = playerData.value("skin", "marko");
-    std::string spritePath = gamePath + "/skin/" + playerSkin + "/spritesheet.png";
-    if (!player.loadSprite(renderer, spritePath)) {
-        std::cout << "Failed to load player skin: " << playerSkin << std::endl;
+    if (fadeSpeed > 0 && fadeAlpha >= fadeTarget) {
+        fadeAlpha = fadeTarget;
+        isFading = false;
+    } else if (fadeSpeed < 0 && fadeAlpha <= fadeTarget) {
+        fadeAlpha = fadeTarget;
+        isFading = false;
     }
     
-    player.setCollisionChecker(this);
-}
-
-void SceneManager::updatePlayerVelocity(float dx, float dy) {
-    player.setVelocity(dx, dy);
+    return isFading;
 }
 
 void SceneManager::update(float deltaTime) {
@@ -545,7 +552,12 @@ void SceneManager::updateActiveCommands(float deltaTime) {
         currentCommand.isStarted = true;
     }
     
-    if (currentCommand.command == "wait") {
+    // Добавляем обновление fade эффекта
+    if (currentCommand.command == "fadeIn" || currentCommand.command == "fadeOut") {
+        if (!updateFade(deltaTime)) {
+            currentCommand.isComplete = true;
+        }
+    } else if (currentCommand.command == "wait") {
         currentCommand.time_left -= deltaTime;
         if (currentCommand.time_left <= 0) {
             currentCommand.isComplete = true;
@@ -568,6 +580,18 @@ void SceneManager::startCommand(ScriptCommand& command) {
     } else if (command.command == "playerMovement") {
         player.setMovementEnabled(command.parameter.get<bool>());
         command.isComplete = true;
+    } else if (command.command == "fadeIn") {
+        float duration = static_cast<float>(command.parameter.get<double>());
+        fadeTarget = 0.0f;
+        fadeAlpha = 1.0f;  // Начинаем с полностью черного экрана
+        fadeSpeed = -1.0f / duration;
+        isFading = true;
+    } else if (command.command == "fadeOut") {
+        float duration = static_cast<float>(command.parameter.get<double>());
+        fadeTarget = 1.0f;
+        fadeAlpha = 0.0f;  // Начинаем с прозрачного экрана
+        fadeSpeed = 1.0f / duration;
+        isFading = true;
     }
 }
 
@@ -578,6 +602,8 @@ bool SceneManager::isCommandComplete(const ScriptCommand& command) const {
         return command.isComplete;
     } else if (command.command == "wait") {
         return command.isComplete;
+    } else if (command.command == "fadeIn" || command.command == "fadeOut") {
+        return command.isComplete && !isFading;  // Добавляем проверку isFading
     }
     return true;
 }
@@ -605,4 +631,28 @@ void SceneManager::handleUseKey() {
     } else {
         useCurrentCell();
     }
+}
+
+void SceneManager::initializePlayer(const json& sceneData) {
+    if (!sceneData.contains("player")) return;
+    
+    auto playerData = sceneData["player"];
+    float x = playerData.value("col", 0) * GRID_SIZE;
+    float y = playerData.value("row", 0) * GRID_SIZE;
+    player.setPosition(x, y, GRID_SIZE);
+    
+    float speed = playerData.value("speed", 100.0f);
+    player.setSpeed(speed);
+    
+    std::string playerSkin = playerData.value("skin", "marko");
+    std::string spritePath = gamePath + "/skin/" + playerSkin + "/spritesheet.png";
+    if (!player.loadSprite(renderer, spritePath)) {
+        std::cout << "Failed to load player skin: " << playerSkin << std::endl;
+    }
+    
+    player.setCollisionChecker(this);
+}
+
+void SceneManager::updatePlayerVelocity(float dx, float dy) {
+    player.setVelocity(dx, dy);
 }

@@ -1,5 +1,5 @@
 {
-    "initialScene": "s1",
+    "initialScene": "intro",
     "window": {
         "width": 800,
         "height": 600,

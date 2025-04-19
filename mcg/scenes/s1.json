@@ -67,6 +67,7 @@
     ],
     "InitialScript": [
         {"playerMovement":false},
+        {"fadeIn": 2},
         {"wait": 3},
         {"playerMovement": true}
     ]
