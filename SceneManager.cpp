@@ -256,29 +256,34 @@ void SceneManager::initializePlayer(const json& sceneData) {
     if (!sceneData.contains("player")) return;
     
     auto playerData = sceneData["player"];
-    int row = playerData.value("row", 0);
-    int col = playerData.value("col", 0);
-    player.setPosition(row, col, GRID_SIZE);
+    float x = playerData.value("col", 0) * GRID_SIZE; // Convert grid position to pixels
+    float y = playerData.value("row", 0) * GRID_SIZE;
+    player.setPosition(x, y, GRID_SIZE);
 }
 
-void SceneManager::handlePlayerMovement(SDL_Keycode key) {
-    if (currentSceneType != SceneType::STATIC || player.isMoving()) return;
-    
-    int newRow = player.getTargetRow();
-    int newCol = player.getTargetCol();
-    
-    switch(key) {
-        case SDLK_UP:    newRow--; break;
-        case SDLK_DOWN:  newRow++; break;
-        case SDLK_LEFT:  newCol--; break;
-        case SDLK_RIGHT: newCol++; break;
-    }
-    
-    if (getCellAt(newRow, newCol)) {
-        player.move(newRow, newCol);
+void SceneManager::updatePlayerVelocity(float dx, float dy) {
+    player.setVelocity(dx, dy);
+}
+
+void SceneManager::update(float deltaTime) {
+    if(currentSceneType == SceneType::VIDEO) {
+        Uint32 currentTime = SDL_GetTicks();
+        if(currentTime >= nextFrameTime) {
+            if(!videoPlayer->decodeNextFrame()) {
+                loadScene(nextSceneName);
+                return;
+            }
+            nextFrameTime = currentTime + videoPlayer->getFrameDelay();
+            
+            if (currentTime > nextFrameTime + videoPlayer->getFrameDelay() * 2) {
+                nextFrameTime = currentTime;
+            }
+        }
+    } else if(currentSceneType == SceneType::STATIC) {
+        player.update(deltaTime);
     }
 }
 
 void SceneManager::updatePlayerPosition() {
-    player.update();
+    player.update(1.0f / 30.0f);  // Use fixed timestep
 }

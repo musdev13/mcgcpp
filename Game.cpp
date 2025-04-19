@@ -74,18 +74,16 @@ void Game::handleEvents() {
                             std::cout << "Cell ID: row=" << cell->row << ", col=" << cell->col << std::endl;
                         }
                     }
-                } else if(sceneManager) {
-                    sceneManager->handlePlayerMovement(event.key.keysym.sym);
                 }
                 break;
         }
     }
 }
 
-void Game::update(){
+void Game::update() {
     if(sceneManager) {
         handleMovementKeys();
-        sceneManager->update();
+        sceneManager->update(1.0f / 30.0f); // Pass fixed deltaTime for 30 FPS
     }
 }
 
@@ -94,18 +92,29 @@ void Game::handleMovementKeys() {
     
     if(!sceneManager) return;
     
+    float dx = 0.0f, dy = 0.0f;
+    
     if(keyState[SDL_SCANCODE_UP]) {
-        sceneManager->handlePlayerMovement(SDLK_UP);
+        dy = -1.0f;
     }
-    else if(keyState[SDL_SCANCODE_DOWN]) {
-        sceneManager->handlePlayerMovement(SDLK_DOWN);
+    if(keyState[SDL_SCANCODE_DOWN]) {
+        dy = 1.0f;
     }
-    else if(keyState[SDL_SCANCODE_LEFT]) {
-        sceneManager->handlePlayerMovement(SDLK_LEFT);
+    if(keyState[SDL_SCANCODE_LEFT]) {
+        dx = -1.0f;
     }
-    else if(keyState[SDL_SCANCODE_RIGHT]) {
-        sceneManager->handlePlayerMovement(SDLK_RIGHT);
+    if(keyState[SDL_SCANCODE_RIGHT]) {
+        dx = 1.0f;
     }
+    
+    // Normalize diagonal movement
+    if (dx != 0.0f && dy != 0.0f) {
+        const float normalize = 0.707107f; // 1/√2
+        dx *= normalize;
+        dy *= normalize;
+    }
+    
+    sceneManager->updatePlayerVelocity(dx, dy);
 }
 
 void Game::render(){

@@ -47,7 +47,8 @@ public:
     const GridCell* getCellAt(int row, int col) const;
     const GridCell* getCellAtPosition(int x, int y) const;
     void calculateGrid();
-    void handlePlayerMovement(SDL_Keycode key);
+    void updatePlayerVelocity(float dx, float dy);
+    void update(float deltaTime);
 
 private:
     SDL_Renderer* renderer;
