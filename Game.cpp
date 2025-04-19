@@ -9,13 +9,14 @@ Game::~Game(){
     if(sceneManager) delete sceneManager;
 }
 
-void Game::init(const char *title, int xpos, int ypos, int width, int height, bool fullscreen, const std::string& gamePath){
-    int flags = 0;
-    if (fullscreen){
-        flags = SDL_WINDOW_FULLSCREEN;
+void Game::init(const char *title, int xpos, int ypos, int width, int height, bool fullscreen, const std::string& gamePath) {
+    int flags = SDL_WINDOW_SHOWN;  // Base flags
+    if (fullscreen) {
+        flags |= SDL_WINDOW_FULLSCREEN;
     }
+    // Note: We're not adding SDL_WINDOW_RESIZABLE flag, making window fixed size
     
-    if(SDL_Init(SDL_INIT_EVERYTHING) == 0){
+    if(SDL_Init(SDL_INIT_EVERYTHING) == 0) {
         std::cout << "Subsystems Initialized!..." << std::endl;
         
         // Initialize SDL_Image for PNG support
@@ -23,6 +24,13 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
             std::cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
             isRunning = false;
             return;
+        }
+
+        // Get desktop display mode
+        SDL_DisplayMode displayMode;
+        if (SDL_GetDesktopDisplayMode(0, &displayMode) == 0) {
+            xpos = (displayMode.w - width) / 2;
+            ypos = (displayMode.h - height) / 2;
         }
 
         window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
