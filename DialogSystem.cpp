@@ -3,6 +3,7 @@
 
 DialogSystem::DialogSystem(SDL_Renderer* renderer, const std::string& gamePath) 
     : renderer(renderer),
+      gamePath(gamePath),  // Сохраняем путь к игре
       dialogBox(nullptr),
       boxHeight(250),
       active(false), 
@@ -63,8 +64,21 @@ void DialogSystem::render() {
     SDL_Rect dstRect = {0, static_cast<int>(currentY), 800, boxHeight};
     SDL_RenderCopy(renderer, dialogBox, nullptr, &dstRect);
 
-    // Рендерим текст
+    // Рендерим текст и аватар
     if(currentGroup && currentLineIndex < currentGroup->lines.size()) {
+        const auto& line = currentGroup->lines[currentLineIndex];
+        
+        // Сначала рендерим аватар, чтобы он был под текстом
+        if(line.avatarTexture) {
+            SDL_Rect avatarRect = {
+                800 - AVATAR_SIZE - 20,  // 20 пикселей отступ справа
+                static_cast<int>(currentY) - AVATAR_SIZE/2,  // Половина аватара выше окна
+                AVATAR_SIZE,
+                AVATAR_SIZE
+            };
+            SDL_RenderCopy(renderer, line.avatarTexture, nullptr, &avatarRect);
+        }
+        
         renderText();
     }
 }
@@ -174,7 +188,7 @@ void DialogSystem::handleInput(bool useKeyPressed) {
 
 void DialogSystem::nextLine() {
     if(!currentGroup) return;
-    
+
     currentLineIndex++;
     if(currentLineIndex >= currentGroup->lines.size()) {
         close();
@@ -186,7 +200,7 @@ void DialogSystem::nextLine() {
 
 void DialogSystem::showDialog(const std::string& dialogGroupName) {
     if(state != DialogState::Hidden) return;
-    
+
     active = true;
     state = DialogState::Opening;
     targetY = 600 - boxHeight;
@@ -194,10 +208,14 @@ void DialogSystem::showDialog(const std::string& dialogGroupName) {
 }
 
 void DialogSystem::setCurrentGroup(const DialogGroup* group) {
-    currentGroup = const_cast<DialogGroup*>(group); // Преобразуем const в non-const
+    cleanupAvatars();
+    currentGroup = const_cast<DialogGroup*>(group);
     currentLineIndex = 0;
     if(group && !group->lines.empty()) {
-        group->lines[0].displayedText = "";
+        for(auto& line : currentGroup->lines) {
+            loadAvatar(line, gamePath);
+        }
+        currentGroup->lines[0].displayedText = "";
     }
 }
 
@@ -205,5 +223,27 @@ void DialogSystem::close() {
     if(state == DialogState::Stable) {
         state = DialogState::Closing;
         targetY = 600;
+    }
+}
+
+void DialogSystem::cleanupAvatars() {
+    if(currentGroup) {
+        for(auto& line : currentGroup->lines) {
+            if(line.avatarTexture) {
+                SDL_DestroyTexture(line.avatarTexture);
+                line.avatarTexture = nullptr;
+            }
+        }
+    }
+}
+
+void DialogSystem::loadAvatar(DialogLine& line, const std::string& gamePath) {
+    if(line.avatar == "none") return;
+    
+    std::string avatarPath = gamePath + "/image/" + line.avatar;
+    SDL_Surface* surface = IMG_Load(avatarPath.c_str());
+    if(surface) {
+        line.avatarTexture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
     }
 }

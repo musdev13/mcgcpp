@@ -38,8 +38,8 @@
         {
             "name": "testDialog",
             "content": [
-                {"title": "Marko", "text": "Hi! It's a dialog text!"},
-                {"title": "Marko", "text": "And this is the next dialog text"}
+                {"title": "Marko", "text": "Hi! It's a dialog text!", "avatar": "avatars/testAvatar.png"},
+                {"title": "Marko", "text": "And this is the next dialog text", "avatar": "none"}
             ]
         }
     ],

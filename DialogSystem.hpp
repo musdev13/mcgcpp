@@ -10,7 +10,11 @@
 struct DialogLine {
     std::string title;
     std::string text;
-    mutable std::string displayedText; // Теперь можно изменять даже в const объектах
+    std::string avatar;  // Путь к аватару или "none"
+    mutable std::string displayedText;
+    mutable SDL_Texture* avatarTexture;  // Кэшированная текстура аватара
+    
+    DialogLine() : avatarTexture(nullptr) {}
 };
 
 struct DialogGroup {
@@ -22,7 +26,6 @@ class DialogSystem {
 public:
     DialogSystem(SDL_Renderer* renderer, const std::string& gamePath);
     ~DialogSystem();
-
     void loadDialogBox(const std::string& path);
     void render();
     void update(float deltaTime);
@@ -41,12 +44,13 @@ private:
     float currentY;
     float targetY;
     float animationSpeed;
+    std::string gamePath;  // Добавляем путь к игре
     
     enum class DialogState {
         Hidden,
         Opening,
         Stable,
-        Closing
+        Closing,
     } state;
 
     DialogGroup* currentGroup; // Убираем const
@@ -54,12 +58,12 @@ private:
     float textTimer;
     float charDelay;
     bool instantPrint;
-    
     TTF_Font* font;
     int fontSize;
     SDL_Color textColor;
     SDL_Color titleColor;
     int textPadding;
+    static const int AVATAR_SIZE = 212;
 
     void initializeFont(const std::string& gamePath);
     void updateAnimation(float deltaTime);
@@ -67,6 +71,8 @@ private:
     void nextLine();
     void close();
     void renderText();
+    void loadAvatar(DialogLine& line, const std::string& gamePath);
+    void cleanupAvatars();
 };
 
 #endif
