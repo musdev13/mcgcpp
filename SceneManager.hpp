@@ -40,7 +40,8 @@ struct GridCell {
 
 struct ScriptCommand {
     std::string command;
-    std::string parameter;
+    json parameter;
+    float time_left = 0.0f;  // Добавляем время ожидания
     bool isComplete;
     bool isStarted;  // Добавляем флаг для отслеживания начала выполнения команды
     
@@ -122,7 +123,9 @@ private:
     void executeScriptGroup(const std::string& groupName);
     void executeCommand(const ScriptCommand& command);
     void loadDialogGroups(const json& sceneData);
-    void updateActiveCommands(); // Новый метод для обновления команд
+    void updateActiveCommands(float deltaTime);  // Обновляем сигнатуру метода
+    bool isCommandComplete(const ScriptCommand& command) const;
+    void startCommand(ScriptCommand& command);
 };
 
 #endif

@@ -48,6 +48,7 @@
             "name": "testScript",
             "script": [
                 {"showDialog": "testDialog"},
+                {"wait": 3},
                 {"showDebugMessage": "It works!"},
                 {"showDebugMessage": "It works fine!"}
             ]

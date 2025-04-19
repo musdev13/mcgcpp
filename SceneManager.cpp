@@ -340,7 +340,7 @@ void SceneManager::update(float deltaTime) {
     } else if(currentSceneType == SceneType::STATIC) {
         player.update(deltaTime);
         checkPlayerInScriptCells();
-        updateActiveCommands(); // Добавляем обновление команд
+        updateActiveCommands(deltaTime); // Добавляем обновление команд
     }
     if(dialogSystem) {
         dialogSystem->update(deltaTime);
@@ -514,40 +514,53 @@ void SceneManager::executeScriptGroup(const std::string& groupName) {
     }
 }
 
-void SceneManager::updateActiveCommands() {
-    if(activeCommands.empty()) return;
+void SceneManager::updateActiveCommands(float deltaTime) {
+    if (activeCommands.empty()) return;
 
-    // Проверяем только первую команду в очереди
-    auto& currentCommand = activeCommands[0];
+    auto& currentCommand = activeCommands.front();
     
-    if(!currentCommand.isComplete) {
-        // Если команда ещё не запущена, запускаем её
-        if(currentCommand.command == "showDialog") {
-            if(!dialogSystem->isActive() && !currentCommand.isStarted) {
-                // Диалог не активен и команда ещё не начата - запускаем диалог
-                toggleDialog(currentCommand.parameter);
-                currentCommand.isStarted = true;
-            }
-            else if(currentCommand.isStarted && !dialogSystem->isActive() && !dialogSystem->isAnimating()) {
-                // Если диалог был запущен и теперь полностью закрыт - завершаем команду
-                currentCommand.isComplete = true;
-            }
-        }
-        else if(currentCommand.command == "showDebugMessage") {
-            std::cout << "Script message: " << currentCommand.parameter << std::endl;
+    if (!currentCommand.isStarted) {
+        startCommand(currentCommand);
+        currentCommand.isStarted = true;
+    }
+    
+    if (currentCommand.command == "wait") {
+        currentCommand.time_left -= deltaTime;
+        if (currentCommand.time_left <= 0) {
             currentCommand.isComplete = true;
         }
     }
     
-    // Если текущая команда завершена, удаляем её из очереди
-    if(currentCommand.isComplete) {
+    if (isCommandComplete(currentCommand)) {
         activeCommands.erase(activeCommands.begin());
     }
 }
 
+void SceneManager::startCommand(ScriptCommand& command) {
+    if (command.command == "showDialog") {
+        toggleDialog(command.parameter);
+    } else if (command.command == "showDebugMessage") {
+        std::cout << "Debug: " << command.parameter << std::endl;
+        command.isComplete = true;
+    } else if (command.command == "wait") {
+        command.time_left = static_cast<float>(command.parameter.get<double>());
+    }
+}
+
+bool SceneManager::isCommandComplete(const ScriptCommand& command) const {
+    if (command.command == "showDialog") {
+        return !dialogSystem->isActive();
+    } else if (command.command == "showDebugMessage") {
+        return command.isComplete;
+    } else if (command.command == "wait") {
+        return command.isComplete;
+    }
+    return true;
+}
+
 void SceneManager::executeCommand(const ScriptCommand& command) {
-    // Этот метод теперь не используется напрямую
-    // Все команды обрабатываются через updateActiveCommands
+    // Этот метод теперь только добавляет команды в очередь
+    activeCommands.push_back(command);
 }
 
 void SceneManager::toggleDialog(const std::string& dialogName) {
