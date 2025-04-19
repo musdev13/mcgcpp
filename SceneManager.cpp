@@ -513,6 +513,10 @@ void SceneManager::executeCommand(const ScriptCommand& command) {
     if(command.command == "showDebugMessage") {
         std::cout << "Script message: " << command.parameter << std::endl;
     }
+    else if(command.command == "showDialog") {
+        // Используем существующий метод toggleDialog для показа диалога
+        toggleDialog(command.parameter);
+    }
     // Здесь можно добавить другие команды в будущем
 }
 
