@@ -59,6 +59,10 @@ struct ScriptCellGroup {
     std::string scriptGroupName;
 };
 
+struct InitialScriptData {
+    std::vector<ScriptCommand> commands;
+};
+
 class SceneManager {
 public:
     SceneManager(SDL_Renderer* renderer);
@@ -103,6 +107,7 @@ private:
     std::vector<DialogGroup> dialogGroups;
     DialogSystem* dialogSystem;
     std::vector<ScriptCommand> activeCommands; // Очередь активных команд
+    InitialScriptData initialScript;
     
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
@@ -126,6 +131,7 @@ private:
     void updateActiveCommands(float deltaTime);  // Обновляем сигнатуру метода
     bool isCommandComplete(const ScriptCommand& command) const;
     void startCommand(ScriptCommand& command);
+    void loadInitialScript(const json& sceneData);
 };
 
 #endif

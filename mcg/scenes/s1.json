@@ -64,5 +64,10 @@
             ],
             "needUseKey": true
         }
+    ],
+    "InitialScript": [
+        {"playerMovement":false},
+        {"wait": 3},
+        {"playerMovement": true}
     ]
 }

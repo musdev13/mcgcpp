@@ -81,6 +81,27 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     calculateGrid();
     initializePlayer(sceneData);
     loadDialogGroups(sceneData);
+    loadInitialScript(sceneData); // Загружаем начальный скрипт
+    
+    // Сразу запускаем начальный скрипт если он есть
+    if (!initialScript.commands.empty()) {
+        activeCommands = initialScript.commands;
+    }
+}
+
+void SceneManager::loadInitialScript(const json& sceneData) {
+    initialScript.commands.clear();
+    
+    if(sceneData.contains("InitialScript")) {
+        for(const auto& cmdData : sceneData["InitialScript"]) {
+            for(auto it = cmdData.begin(); it != cmdData.end(); ++it) {
+                ScriptCommand cmd;
+                cmd.command = it.key();
+                cmd.parameter = it.value();
+                initialScript.commands.push_back(cmd);
+            }
+        }
+    }
 }
 
 void SceneManager::loadBackgroundImage(const std::string& imagePath) {
