@@ -236,12 +236,13 @@ void SceneManager::drawGrid() {
     }
 }
 
-void SceneManager::update() {
-    if(currentSceneType == SceneType::VIDEO) {
+void SceneManager::update(float deltaTime) {
+    if(isPlayingVideo) {
         Uint32 currentTime = SDL_GetTicks();
         if(currentTime >= nextFrameTime) {
             if(!videoPlayer->decodeNextFrame()) {
-                loadScene(nextSceneName);
+                isPlayingVideo = false;
+                videoPlayer->cleanup();
                 return;
             }
             nextFrameTime = currentTime + videoPlayer->getFrameDelay();
@@ -249,81 +250,89 @@ void SceneManager::update() {
                 nextFrameTime = currentTime;
             }
         }
-    } else if(currentSceneType == SceneType::STATIC) {
-        updatePlayerPosition();
+    }
+    
+    if(currentSceneType == SceneType::STATIC && !isPlayingVideo) {
+        player.update(deltaTime);
+        checkPlayerInScriptCells();
+    }
+    
+    updateActiveCommands(deltaTime);
+    
+    if(dialogSystem) {
+        dialogSystem->update(deltaTime);
     }
 }
 
 void SceneManager::render() {
-    if(currentSceneType == SceneType::VIDEO && videoPlayer->getTexture()) {
+    if(isPlayingVideo && videoPlayer->getTexture()) {
         SDL_RenderCopy(renderer, videoPlayer->getTexture(), nullptr, nullptr);
-    } else {
+    } else if(currentSceneType == SceneType::STATIC) {
         SDL_SetRenderDrawColor(renderer, 
             backgroundColor.r, 
             backgroundColor.g, 
             backgroundColor.b, 
             backgroundColor.a);
         SDL_RenderClear(renderer);
-        // Рендерим слои с фиксированным размером
+        
         for(const auto& layer : layers) {
             SDL_SetTextureAlphaMod(layer.texture, layer.opacity);
-            // Создаем прямоугольник назначения с оригинальными размерами
             SDL_Rect dstRect = {0, 0, layer.width, layer.height};
-            // Центрируем изображение, если оно меньше окна
             int w, h;
             SDL_GetRendererOutputSize(renderer, &w, &h);
             dstRect.x = (w - layer.width) / 2;
             dstRect.y = (h - layer.height) / 2;
             SDL_RenderCopy(renderer, layer.texture, nullptr, &dstRect);
         }
-        if(showGrid && currentSceneType == SceneType::STATIC) {
+        
+        if(showGrid) {
             drawGrid();
         }
-        if(currentSceneType == SceneType::STATIC) {
-            player.render(renderer);
-            
-            // Рендерим коллизии (отладочное отображение)
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128); // Полупрозрачный красный
-            for(const auto& cell : collisionCells) {
-                SDL_Rect collisionRect = {
-                    cell.second * GRID_SIZE,  // x = col * size
-                    cell.first * GRID_SIZE,   // y = row * size
-                    GRID_SIZE,                // width
-                    GRID_SIZE                 // height
-                };
-                SDL_RenderDrawRect(renderer, &collisionRect);
-            }
-            
-            // Отображаем точку коллизии игрока 
-            float playerCollisionX = player.getX() + player.getSize()/2;
-            float playerCollisionY = player.getY() + player.getSize() + player.getSize()/2 - 4; // Подняли на 4 пикселя
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-            SDL_Rect playerPoint = {
-                static_cast<int>(playerCollisionX) - 2,
-                static_cast<int>(playerCollisionY) - 2,
-                4, 4
+        
+        player.render(renderer);
+        
+        // Рендерим коллизии (отладочное отображение)
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128);
+        for(const auto& cell : collisionCells) {
+            SDL_Rect collisionRect = {
+                cell.second * GRID_SIZE,
+                cell.first * GRID_SIZE,
+                GRID_SIZE,
+                GRID_SIZE
             };
-            SDL_RenderFillRect(renderer, &playerPoint);
+            SDL_RenderDrawRect(renderer, &collisionRect);
         }
+        
+        // Отображаем точку коллизии игрока 
+        float playerCollisionX = player.getX() + player.getSize()/2;
+        float playerCollisionY = player.getY() + player.getSize() + player.getSize()/2 - 4;
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        SDL_Rect playerPoint = {
+            static_cast<int>(playerCollisionX) - 2,
+            static_cast<int>(playerCollisionY) - 2,
+            4, 4
+        };
+        SDL_RenderFillRect(renderer, &playerPoint);
+        
         // Рендерим скрипт-клетки
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128); // Полупрозрачный синий
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128);
         for(const auto& group : scriptCells) {
             for(const auto& cell : group.cells) {
                 SDL_Rect scriptRect = {
-                    cell.second * GRID_SIZE,  // x = col * size
-                    cell.first * GRID_SIZE,   // y = row * size
-                    GRID_SIZE,                // width
-                    GRID_SIZE                 // height
+                    cell.second * GRID_SIZE,
+                    cell.first * GRID_SIZE,
+                    GRID_SIZE,
+                    GRID_SIZE
                 };
                 SDL_RenderDrawRect(renderer, &scriptRect);
             }
         }
     }
+    
     if(dialogSystem) {
         dialogSystem->render();
     }
     
-    // Рендерим эффект затемнения поверх всего
     renderFadeEffect();
 }
 
@@ -353,30 +362,6 @@ bool SceneManager::updateFade(float deltaTime) {
     }
     
     return isFading;
-}
-
-void SceneManager::update(float deltaTime) {
-    if(currentSceneType == SceneType::VIDEO) {
-        Uint32 currentTime = SDL_GetTicks();
-        if(currentTime >= nextFrameTime) {
-            if(!videoPlayer->decodeNextFrame()) {
-                loadScene(nextSceneName);
-                return;
-            }
-            nextFrameTime = currentTime + videoPlayer->getFrameDelay();
-            
-            if (currentTime > nextFrameTime + videoPlayer->getFrameDelay() * 2) {
-                nextFrameTime = currentTime;
-            }
-        }
-    } else if(currentSceneType == SceneType::STATIC) {
-        player.update(deltaTime);
-        checkPlayerInScriptCells();
-        updateActiveCommands(deltaTime); // Добавляем обновление команд
-    }
-    if(dialogSystem) {
-        dialogSystem->update(deltaTime);
-    }
 }
 
 void SceneManager::updatePlayerPosition() {
@@ -652,6 +637,11 @@ void SceneManager::startCommand(ScriptCommand& command) {
             globalVars[varName] = evaluateExpression(expression);
         }
         command.isComplete = true;
+    } else if (command.command == "showVid") {
+        std::string videoPath = command.parameter.get<std::string>();
+        if (!initializeVideo(videoPath)) {
+            command.isComplete = true;
+        }
     }
 }
 
@@ -664,6 +654,8 @@ bool SceneManager::isCommandComplete(const ScriptCommand& command) const {
         return command.isComplete;
     } else if (command.command == "fadeIn" || command.command == "fadeOut") {
         return command.isComplete && !isFading;  // Добавляем проверку isFading
+    } else if (command.command == "showVid") {
+        return command.isComplete || !isPlayingVideo;
     }
     return true;
 }
@@ -1011,4 +1003,15 @@ SceneManager::VarValue SceneManager::evaluateExpression(const std::string& expr)
     }
     
     return parsedExpr; // Return as string if not a number
+}
+
+bool SceneManager::initializeVideo(const std::string& videoPath) {
+    std::string fullPath = gamePath + "/video/" + videoPath;
+    if(!videoPlayer->initialize(fullPath)) {
+        std::cout << "Failed to initialize video: " << fullPath << std::endl;
+        return false;
+    }
+    isPlayingVideo = true;
+    nextFrameTime = SDL_GetTicks();
+    return true;
 }

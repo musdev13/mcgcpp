@@ -167,6 +167,9 @@ private:
 
     VarValue evaluateExpression(const std::string& expr);
     bool isNumber(const std::string& str) const;
+
+    bool isPlayingVideo = false;
+    bool initializeVideo(const std::string& videoPath);
 };
 
 #endif
