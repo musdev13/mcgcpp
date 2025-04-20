@@ -962,6 +962,10 @@ bool SceneManager::isNumber(const std::string& str) const {
 SceneManager::VarValue SceneManager::evaluateExpression(const std::string& expr) {
     std::string parsedExpr = parseVarString(expr);
     
+    // Handle boolean values first
+    if(parsedExpr == "true") return true;
+    if(parsedExpr == "false") return false;
+    
     // Check for arithmetic operations
     size_t pos;
     if((pos = parsedExpr.find('+')) != std::string::npos) {

@@ -54,7 +54,7 @@
         {
             "name": "testScript",
             "script": [
-                {"setVar": ["var5","{var2}+1"]}
+                {"setVar": ["var5","true"]}
             ]
         }
     ],
