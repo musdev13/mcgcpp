@@ -26,12 +26,16 @@ private:
     AVFormatContext* formatContext;
     AVCodecContext* codecContext;
     AVFrame* frame;
-    AVFrame* frameYUV;
+    AVFrame* frameRGBA;
     AVPacket* packet;
     SwsContext* swsContext;
     SDL_Texture* videoTexture;
     int videoStreamIndex;
     Uint32 frameDelay;
+    uint8_t* rgbaBuffer;
+    SDL_Surface* tempSurface;
+    
+    void processGreenScreenSDL(SDL_Surface* surface);
 };
 
 #endif

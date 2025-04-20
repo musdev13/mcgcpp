@@ -266,6 +266,23 @@ void SceneManager::update(float deltaTime) {
 
 void SceneManager::render() {
     if(isPlayingVideo && videoPlayer->getTexture()) {
+        // Сначала очищаем рендерер с прозрачным цветом (не синим)
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+        
+        // Рендерим слои перед видео
+        for(const auto& layer : layers) {
+            SDL_SetTextureAlphaMod(layer.texture, layer.opacity);
+            SDL_Rect dstRect = {0, 0, layer.width, layer.height};
+            int w, h;
+            SDL_GetRendererOutputSize(renderer, &w, &h);
+            dstRect.x = (w - layer.width) / 2;
+            dstRect.y = (h - layer.height) / 2;
+            SDL_RenderCopy(renderer, layer.texture, nullptr, &dstRect);
+        }
+        
+        // Рендерим видео с правильным режимом смешивания
+        SDL_SetTextureBlendMode(videoPlayer->getTexture(), SDL_BLENDMODE_BLEND);
         SDL_RenderCopy(renderer, videoPlayer->getTexture(), nullptr, nullptr);
     } else if(currentSceneType == SceneType::STATIC) {
         SDL_SetRenderDrawColor(renderer, 
