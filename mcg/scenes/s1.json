@@ -35,6 +35,12 @@
         {"row": 7, "col": 5},
         {"row": 8, "col": 14}
     ],
+    "GlobalVars":{
+        "var1": false,
+        "var2": 15,
+        "var3": "hi",
+        "var4": false
+    },
     "DialogGroups": [
         {
             "name": "testDialog",
@@ -48,12 +54,24 @@
         {
             "name": "testScript",
             "script": [
-                {"playerMovement": false},
-                {"showDialog": "testDialog"},
-                {"wait": 3},
-                {"playerMovement": true},
-                {"showDebugMessage": "It works!"},
-                {"showDebugMessage": "It works fine!"}
+                {
+                    "if": {
+                        "condition": "{var1} and !{var4}",
+                        "then": [
+                            {"showDebugMessage": "it works"}
+                        ],
+                        "else": [
+                            {
+                                "if": {
+                                    "condition": "{var2} >= 3",
+                                    "then": [
+                                        {"showDebugMessage": "{var3}"}
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
             ]
         }
     ],

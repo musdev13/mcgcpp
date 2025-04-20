@@ -85,6 +85,7 @@ void SceneManager::loadStaticScene(const json& sceneData) {
     initializePlayer(sceneData);
     loadDialogGroups(sceneData);
     loadInitialScript(sceneData); // Загружаем начальный скрипт
+    loadGlobalVars(sceneData); // Загружаем глобальные переменные
     
     // Сразу запускаем начальный скрипт если он есть
     if (!initialScript.commands.empty()) {
@@ -534,13 +535,56 @@ void SceneManager::useCurrentCell() {
 }
 
 void SceneManager::executeScriptGroup(const std::string& groupName) {
-    activeCommands.clear(); // Очищаем предыдущие команды
+    activeCommands.clear();
     
-    // Находим группу и добавляем все её команды в очередь
     for(const auto& group : scriptGroups) {
         if(group.name == groupName) {
-            activeCommands = group.commands;
+            processScriptCommands(group.commands);
             break;
+        }
+    }
+}
+
+void SceneManager::processScriptCommands(const std::vector<ScriptCommand>& commands) {
+    for(const auto& cmd : commands) {
+        if(cmd.command == "if") {
+            // Новый формат с вложенными then/else блоками
+            if(cmd.parameter.contains("condition")) {
+                bool result = evaluateCondition(cmd.parameter["condition"]);
+                if(result && cmd.parameter.contains("then")) {
+                    for(const auto& thenCmd : cmd.parameter["then"]) {
+                        processCommand(thenCmd);
+                    }
+                }
+                else if(!result && cmd.parameter.contains("else")) {
+                    for(const auto& elseCmd : cmd.parameter["else"]) {
+                        processCommand(elseCmd);
+                    }
+                }
+            }
+        } else {
+            processCommand(json{{cmd.command, cmd.parameter}});
+        }
+    }
+}
+
+void SceneManager::processCommand(const json& cmd) {
+    for(auto it = cmd.begin(); it != cmd.end(); ++it) {
+        if(it.key() == "if") {
+            // Рекурсивно обрабатываем вложенные if
+            ScriptCommand ifCmd;
+            ifCmd.command = "if";
+            ifCmd.parameter = it.value();
+            processScriptCommands({ifCmd});
+        } else {
+            ScriptCommand processedCmd;
+            processedCmd.command = it.key();
+            processedCmd.parameter = it.value();
+            if(processedCmd.parameter.is_string()) {
+                std::string parsedParam = parseVarString(processedCmd.parameter.get<std::string>());
+                processedCmd.parameter = parsedParam;
+            }
+            activeCommands.push_back(processedCmd);
         }
     }
 }
@@ -658,4 +702,222 @@ void SceneManager::initializePlayer(const json& sceneData) {
 
 void SceneManager::updatePlayerVelocity(float dx, float dy) {
     player.setVelocity(dx, dy);
+}
+
+void SceneManager::loadGlobalVars(const json& sceneData) {
+    if (!sceneData.contains("GlobalVars")) return;
+    
+    const auto& vars = sceneData["GlobalVars"];
+    for (auto it = vars.begin(); it != vars.end(); ++it) {
+        globalVars[it.key()] = parseJsonValue(it.value());
+    }
+}
+
+bool SceneManager::evaluateCondition(const std::string& condition) {
+    std::string parsedCondition = parseVarString(condition);
+    
+    // Split by 'and' or 'or'
+    std::vector<std::string> parts;
+    size_t pos = 0;
+    std::string currentPart;
+    
+    while (pos < parsedCondition.length()) {
+        if (parsedCondition.substr(pos, 5) == " and ") {
+            parts.push_back(currentPart);
+            currentPart.clear();
+            pos += 5;
+        } else if (parsedCondition.substr(pos, 4) == " or ") {
+            parts.push_back(currentPart);
+            currentPart.clear();
+            pos += 4;
+        } else {
+            currentPart += parsedCondition[pos];
+            pos++;
+        }
+    }
+    if (!currentPart.empty()) {
+        parts.push_back(currentPart);
+    }
+
+    bool result = true;
+    bool isOr = false;
+
+    for (const auto& part : parts) {
+        std::string trimmed = trim(part);
+        bool partResult;
+
+        if (trimmed.substr(0, 1) == "!") {
+            partResult = !evaluateSimpleCondition(trimmed.substr(1));
+        } else {
+            partResult = evaluateSimpleCondition(trimmed);
+        }
+
+        if (isOr) {
+            result = result || partResult;
+            isOr = false;
+        } else {
+            result = result && partResult;
+        }
+
+        if (trimmed.find(" or ") != std::string::npos) {
+            isOr = true;
+        }
+    }
+
+    return result;
+}
+
+std::string SceneManager::trim(const std::string& str) {
+    size_t first = str.find_first_not_of(" \t");
+    if (first == std::string::npos) return "";
+    size_t last = str.find_last_not_of(" \t");
+    return str.substr(first, last - first + 1);
+}
+
+bool SceneManager::evaluateSimpleCondition(const std::string& condition) {
+    // Handle comparisons
+    if (condition.find(">=") != std::string::npos) {
+        auto parts = splitByOperator(condition, ">=");
+        return compareValues(parts.first, parts.second, ">=");
+    }
+    if (condition.find("<=") != std::string::npos) {
+        auto parts = splitByOperator(condition, "<=");
+        return compareValues(parts.first, parts.second, "<=");
+    }
+    if (condition.find(">") != std::string::npos) {
+        auto parts = splitByOperator(condition, ">");
+        return compareValues(parts.first, parts.second, ">");
+    }
+    if (condition.find("<") != std::string::npos) {
+        auto parts = splitByOperator(condition, "<");
+        return compareValues(parts.first, parts.second, "<");
+    }
+    if (condition.find("==") != std::string::npos) {
+        auto parts = splitByOperator(condition, "==");
+        return compareValues(parts.first, parts.second, "==");
+    }
+    if (condition.find("!=") != std::string::npos) {
+        auto parts = splitByOperator(condition, "!=");
+        return compareValues(parts.first, parts.second, "!=");
+    }
+
+    // Handle boolean values
+    if (condition == "true") return true;
+    if (condition == "false") return false;
+
+    // Try to find variable by exact name
+    auto it = globalVars.find(condition);
+    if (it != globalVars.end()) {
+        if (std::holds_alternative<bool>(it->second)) {
+            return std::get<bool>(it->second);
+        }
+        // Convert other types to boolean
+        if (std::holds_alternative<int>(it->second)) {
+            return std::get<int>(it->second) != 0;
+        }
+        if (std::holds_alternative<float>(it->second)) {
+            return std::get<float>(it->second) != 0.0f;
+        }
+        if (std::holds_alternative<std::string>(it->second)) {
+            return !std::get<std::string>(it->second).empty();
+        }
+    }
+
+    return false;
+}
+
+std::pair<std::string, std::string> SceneManager::splitByOperator(const std::string& condition, const std::string& op) {
+    size_t pos = condition.find(op);
+    if (pos == std::string::npos) {
+        return {condition, ""};
+    }
+    std::string left = trim(condition.substr(0, pos));
+    std::string right = trim(condition.substr(pos + op.length()));
+    return {left, right};
+}
+
+bool SceneManager::compareValues(const std::string& left, const std::string& right, const std::string& op) {
+    // Convert values to appropriate types
+    auto leftValue = convertToValue(left);
+    auto rightValue = convertToValue(right);
+
+    if (!leftValue.has_value() || !rightValue.has_value()) {
+        return false;
+    }
+
+    if (op == ">=") return leftValue.value() >= rightValue.value();
+    if (op == "<=") return leftValue.value() <= rightValue.value();
+    if (op == ">") return leftValue.value() > rightValue.value();
+    if (op == "<") return leftValue.value() < rightValue.value();
+    if (op == "==") return leftValue.value() == rightValue.value();
+    if (op == "!=") return leftValue.value() != rightValue.value();
+
+    return false;
+}
+
+std::optional<float> SceneManager::convertToValue(const std::string& str) {
+    try {
+        // First try as integer
+        return std::stoi(str);
+    } catch (...) {
+        try {
+            // Then try as float
+            return std::stof(str);
+        } catch (...) {
+            // Not a number, try as variable
+            auto it = globalVars.find(str);
+            if (it != globalVars.end()) {
+                if (std::holds_alternative<int>(it->second)) {
+                    return static_cast<float>(std::get<int>(it->second));
+                }
+                if (std::holds_alternative<float>(it->second)) {
+                    return std::get<float>(it->second);
+                }
+                if (std::holds_alternative<bool>(it->second)) {
+                    return std::get<bool>(it->second) ? 1.0f : 0.0f;
+                }
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+std::string SceneManager::parseVarString(const std::string& str) {
+    std::string result = str;
+    size_t pos = 0;
+    while ((pos = result.find("{", pos)) != std::string::npos) {
+        size_t endPos = result.find("}", pos);
+        if (endPos == std::string::npos) break;
+        
+        std::string varName = result.substr(pos + 1, endPos - pos - 1);
+        auto it = globalVars.find(varName);
+        if (it != globalVars.end()) {
+            std::string replacement;
+            std::visit([&replacement](const auto& value) {
+                if constexpr (std::is_same_v<std::decay_t<decltype(value)>, bool>)
+                    replacement = value ? "true" : "false";
+                else if constexpr (std::is_arithmetic_v<std::decay_t<decltype(value)>>)
+                    replacement = std::to_string(value);
+                else
+                    replacement = value;
+            }, it->second);
+            
+            result.replace(pos, endPos - pos + 1, replacement);
+        }
+        pos++;
+    }
+    return result;
+}
+
+SceneManager::VarValue SceneManager::parseJsonValue(const json& value) {
+    if (value.is_boolean())
+        return value.get<bool>();
+    else if (value.is_number_integer())
+        return value.get<int>();
+    else if (value.is_number_float())
+        return value.get<float>();
+    else if (value.is_string())
+        return value.get<std::string>();
+    
+    return false; // default value
 }

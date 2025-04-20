@@ -10,6 +10,9 @@
 #include "VideoPlayer.hpp"
 #include "Player.hpp"
 #include "DialogSystem.hpp"
+#include <variant>
+#include <map>
+#include <optional>
 
 using json = nlohmann::json;
 
@@ -115,6 +118,15 @@ private:
     float fadeSpeed = 0.0f;
     bool isFading = false;
 
+    // Используем variant для хранения разных типов
+    using VarValue = std::variant<bool, int, float, std::string>;
+    std::map<std::string, VarValue> globalVars;
+    
+    void loadGlobalVars(const json& sceneData);
+    bool evaluateCondition(const std::string& condition);
+    std::string parseVarString(const std::string& str);
+    VarValue parseJsonValue(const json& value);
+
     void loadVideoScene(const json& sceneData);
     void loadStaticScene(const json& sceneData);
     void drawGrid();
@@ -140,6 +152,15 @@ private:
     void loadInitialScript(const json& sceneData);
     void renderFadeEffect();
     bool updateFade(float deltaTime);
+
+    std::string trim(const std::string& str);
+    bool evaluateSimpleCondition(const std::string& condition);
+    std::pair<std::string, std::string> splitByOperator(const std::string& condition, const std::string& op);
+    bool compareValues(const std::string& left, const std::string& right, const std::string& op);
+    std::optional<float> convertToValue(const std::string& str);
+
+    void processScriptCommands(const std::vector<ScriptCommand>& commands);
+    void processCommand(const json& cmd);
 };
 
 #endif
