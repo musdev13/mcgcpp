@@ -162,6 +162,8 @@ private:
 
     void processScriptCommands(const std::vector<ScriptCommand>& commands);
     void processCommand(const json& cmd);
+
+    bool isExecutingScript = false;
 };
 
 #endif

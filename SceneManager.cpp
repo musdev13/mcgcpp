@@ -535,7 +535,10 @@ void SceneManager::useCurrentCell() {
 }
 
 void SceneManager::executeScriptGroup(const std::string& groupName) {
+    if (isExecutingScript) return;  // Блокируем запуск если скрипт уже выполняется
+    
     activeCommands.clear();
+    isExecutingScript = true;
     
     for(const auto& group : scriptGroups) {
         if(group.name == groupName) {
@@ -590,7 +593,10 @@ void SceneManager::processCommand(const json& cmd) {
 }
 
 void SceneManager::updateActiveCommands(float deltaTime) {
-    if (activeCommands.empty()) return;
+    if (activeCommands.empty()) {
+        isExecutingScript = false;  // Сбрасываем флаг когда все команды выполнены
+        return;
+    }
 
     auto& currentCommand = activeCommands.front();
     
@@ -599,7 +605,6 @@ void SceneManager::updateActiveCommands(float deltaTime) {
         currentCommand.isStarted = true;
     }
     
-    // Добавляем обновление fade эффекта
     if (currentCommand.command == "fadeIn" || currentCommand.command == "fadeOut") {
         if (!updateFade(deltaTime)) {
             currentCommand.isComplete = true;
