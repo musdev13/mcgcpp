@@ -164,6 +164,9 @@ private:
     void processCommand(const json& cmd);
 
     bool isExecutingScript = false;
+
+    VarValue evaluateExpression(const std::string& expr);
+    bool isNumber(const std::string& str) const;
 };
 
 #endif

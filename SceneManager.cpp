@@ -635,15 +635,23 @@ void SceneManager::startCommand(ScriptCommand& command) {
     } else if (command.command == "fadeIn") {
         float duration = static_cast<float>(command.parameter.get<double>());
         fadeTarget = 0.0f;
-        fadeAlpha = 1.0f;  // Начинаем с полностью черного экрана
+        fadeAlpha = 1.0f;
         fadeSpeed = -1.0f / duration;
         isFading = true;
     } else if (command.command == "fadeOut") {
         float duration = static_cast<float>(command.parameter.get<double>());
         fadeTarget = 1.0f;
-        fadeAlpha = 0.0f;  // Начинаем с прозрачного экрана
+        fadeAlpha = 0.0f;
         fadeSpeed = 1.0f / duration;
         isFading = true;
+    } else if (command.command == "setVar") {
+        const auto& params = command.parameter;
+        if(params.is_array() && params.size() == 2) {
+            std::string varName = params[0];
+            std::string expression = params[1];
+            globalVars[varName] = evaluateExpression(expression);
+        }
+        command.isComplete = true;
     }
 }
 
@@ -942,4 +950,61 @@ void SceneManager::debugPrintVariables() const {
         std::cout << '\n';
     }
     std::cout << "====================\n";
+}
+
+bool SceneManager::isNumber(const std::string& str) const {
+    if(str.empty()) return false;
+    char* end = nullptr;
+    std::strtof(str.c_str(), &end);
+    return end != str.c_str() && *end == '\0';
+}
+
+SceneManager::VarValue SceneManager::evaluateExpression(const std::string& expr) {
+    std::string parsedExpr = parseVarString(expr);
+    
+    // Check for arithmetic operations
+    size_t pos;
+    if((pos = parsedExpr.find('+')) != std::string::npos) {
+        std::string left = trim(parsedExpr.substr(0, pos));
+        std::string right = trim(parsedExpr.substr(pos + 1));
+        
+        float leftVal = 0, rightVal = 0;
+        
+        // Convert left operand
+        if(isNumber(left)) {
+            leftVal = std::stof(left);
+        } else if(auto it = globalVars.find(left); it != globalVars.end()) {
+            if(std::holds_alternative<int>(it->second)) 
+                leftVal = std::get<int>(it->second);
+            else if(std::holds_alternative<float>(it->second))
+                leftVal = std::get<float>(it->second);
+        }
+        
+        // Convert right operand
+        if(isNumber(right)) {
+            rightVal = std::stof(right);
+        } else if(auto it = globalVars.find(right); it != globalVars.end()) {
+            if(std::holds_alternative<int>(it->second))
+                rightVal = std::get<int>(it->second);
+            else if(std::holds_alternative<float>(it->second))
+                rightVal = std::get<float>(it->second);
+        }
+        
+        // If both operands are integers, return int
+        if(std::floor(leftVal) == leftVal && std::floor(rightVal) == rightVal) {
+            return static_cast<int>(leftVal + rightVal);
+        }
+        return leftVal + rightVal;
+    }
+    
+    // If no arithmetic operations, try to parse as a single value
+    if(isNumber(parsedExpr)) {
+        // Check if it's an integer
+        if(parsedExpr.find('.') == std::string::npos) {
+            return std::stoi(parsedExpr);
+        }
+        return std::stof(parsedExpr);
+    }
+    
+    return parsedExpr; // Return as string if not a number
 }

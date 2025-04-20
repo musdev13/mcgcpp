@@ -54,26 +54,7 @@
         {
             "name": "testScript",
             "script": [
-                {
-                    "if": {
-                        "condition": "{var1} and !{var4}",
-                        "then": [
-                            {"showDebugMessage": "it works"}
-                        ],
-                        "else": [
-                            {
-                                "if": {
-                                    "condition": "{var2} >= 3",
-                                    "then": [
-                                        {"showDebugMessage": "{var2}"},
-                                        {"wait":3},
-                                        {"showDebugMessage": "ended"}
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
+                {"setVar": ["var5","{var2}+1"]}
             ]
         }
     ],
