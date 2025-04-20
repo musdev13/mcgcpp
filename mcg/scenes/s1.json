@@ -65,7 +65,9 @@
                                 "if": {
                                     "condition": "{var2} >= 3",
                                     "then": [
-                                        {"showDebugMessage": "{var3}"}
+                                        {"showDebugMessage": "{var2}"},
+                                        {"wait":3},
+                                        {"showDebugMessage": "ended"}
                                     ]
                                 }
                             }

@@ -89,6 +89,11 @@ void Game::handleEvents() {
                         sceneManager->toggleDialog("testDialog");
                     }
                 }
+                else if(event.key.keysym.sym == SDLK_v) {
+                    if(sceneManager) {
+                        sceneManager->debugPrintVariables();
+                    }
+                }
                 break;
         }
     }

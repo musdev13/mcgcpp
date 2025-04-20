@@ -85,6 +85,7 @@ public:
     void useCurrentCell();
     void toggleDialog(const std::string& dialogName);
     void handleUseKey();
+    void debugPrintVariables() const;
 
 private:
     SDL_Renderer* renderer;

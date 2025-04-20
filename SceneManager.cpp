@@ -921,3 +921,20 @@ SceneManager::VarValue SceneManager::parseJsonValue(const json& value) {
     
     return false; // default value
 }
+
+void SceneManager::debugPrintVariables() const {
+    std::cout << "\n=== Global Variables ===\n";
+    for(const auto& [name, value] : globalVars) {
+        std::cout << name << " = ";
+        std::visit([](const auto& v) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(v)>, bool>)
+                std::cout << (v ? "true" : "false");
+            else if constexpr (std::is_arithmetic_v<std::decay_t<decltype(v)>>)
+                std::cout << v;
+            else
+                std::cout << '"' << v << '"';
+        }, value);
+        std::cout << '\n';
+    }
+    std::cout << "====================\n";
+}
