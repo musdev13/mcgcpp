@@ -54,6 +54,7 @@
         {
             "name": "testScript",
             "script": [
+                {"showVid": "anim/testAnim.mp4"},
                 {"setVar": ["var5","true"]}
             ]
         }
